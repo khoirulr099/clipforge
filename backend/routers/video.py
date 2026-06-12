@@ -43,6 +43,11 @@ class ProcessRequest(BaseModel):
     watermark_text: Optional[str] = ""
     subtitle_position: Optional[str] = "bottom"
     split_screen: Optional[bool] = False
+    clip_summary: Optional[bool] = False
+    transcription_provider: Optional[str] = "gemini"
+    custom_transcribe_key: Optional[str] = ""
+    custom_transcribe_base: Optional[str] = ""
+    custom_transcribe_model: Optional[str] = ""
 
 
 class DeleteClipRequest(BaseModel):
@@ -175,6 +180,10 @@ def run_pipeline(job_id: str, req: ProcessRequest):
                     openai_api_key=req.openai_api_key,
                     openai_base_url=req.openai_base_url,
                     openai_chat_model=req.openai_chat_model,
+                    transcription_provider=req.transcription_provider,
+                    custom_transcribe_key=req.custom_transcribe_key,
+                    custom_transcribe_base=req.custom_transcribe_base,
+                    custom_transcribe_model=req.custom_transcribe_model,
                 )
                 if video_id:
                     os.makedirs(os.path.join("static", "transcripts"), exist_ok=True)
@@ -182,21 +191,32 @@ def run_pipeline(job_id: str, req: ProcessRequest):
                         json.dump(transcript, f, ensure_ascii=False, indent=2)
 
         elif req.mode == "auto":
-            # Auto: evenly spaced clips
+            # Auto: smart randomly-distributed clips across beginning, middle, and end to guarantee different moments on refresh/regeneration
             jobs[job_id].update({"status": "cutting", "progress": 40})
             total = video_info["duration"]
-            for i in range(req.max_clips):
-                start = i * (req.target_duration + 5)
-                if start >= total:
-                    break
-                moments.append({
-                    "start": start,
-                    "end": min(start + req.target_duration, total),
-                    "title": f"Auto clip {i + 1}",
-                    "hook": "",
-                    "reason": "Auto-generated",
-                    "score": 0,
-                })
+            import random
+            
+            if total > 0 and req.max_clips > 0:
+                zone_duration = total / req.max_clips
+                for i in range(req.max_clips):
+                    zone_start = i * zone_duration
+                    zone_end = (i + 1) * zone_duration
+                    
+                    # Clip duration we want to fit
+                    clip_len = min(req.target_duration, zone_duration)
+                    
+                    # Pick a random start time within the zone that allows the clip to fit
+                    max_possible_start = max(zone_start, zone_end - clip_len)
+                    start = random.uniform(zone_start, max_possible_start)
+                    
+                    moments.append({
+                        "start": start,
+                        "end": min(start + clip_len, total),
+                        "title": f"Auto clip {i + 1}",
+                        "hook": "",
+                        "reason": f"Smart auto-distributed (Zone {i + 1})",
+                        "score": 0,
+                    })
 
             # If subtitles are requested but we don't have transcript, fetch it now
             if req.subtitle_style != "none" and not transcript:
@@ -207,6 +227,10 @@ def run_pipeline(job_id: str, req: ProcessRequest):
                     openai_api_key=req.openai_api_key,
                     openai_base_url=req.openai_base_url,
                     openai_chat_model=req.openai_chat_model,
+                    transcription_provider=req.transcription_provider,
+                    custom_transcribe_key=req.custom_transcribe_key,
+                    custom_transcribe_base=req.custom_transcribe_base,
+                    custom_transcribe_model=req.custom_transcribe_model,
                 )
                 if video_id:
                     os.makedirs(os.path.join("static", "transcripts"), exist_ok=True)
@@ -223,6 +247,10 @@ def run_pipeline(job_id: str, req: ProcessRequest):
                     openai_api_key=req.openai_api_key,
                     openai_base_url=req.openai_base_url,
                     openai_chat_model=req.openai_chat_model,
+                    transcription_provider=req.transcription_provider,
+                    custom_transcribe_key=req.custom_transcribe_key,
+                    custom_transcribe_base=req.custom_transcribe_base,
+                    custom_transcribe_model=req.custom_transcribe_model,
                 )
                 if video_id:
                     os.makedirs(os.path.join("static", "transcripts"), exist_ok=True)
@@ -239,6 +267,7 @@ def run_pipeline(job_id: str, req: ProcessRequest):
                 openai_api_key=req.openai_api_key,
                 openai_base_url=req.openai_base_url,
                 openai_chat_model=req.openai_chat_model,
+                include_summary=req.clip_summary,
             )
             # Normalize to duration-based end time
             for m in raw_moments:

@@ -18,6 +18,19 @@ import {
 
 const POLL_INTERVAL = 2500;
 
+interface ApiProfile {
+  id: string;
+  name: string;
+  geminiApiKey: string;
+  openaiApiKey: string;
+  openaiBaseUrl: string;
+  openaiChatModel: string;
+  transcriptionProvider: string;
+  customTranscribeKey: string;
+  customTranscribeBase: string;
+  customTranscribeModel: string;
+}
+
 // Profiles removed to simplify direct API Key settings
 
 function getYouTubeId(url: string): string | null {
@@ -136,17 +149,32 @@ export default function Home() {
   const [theme, setTheme] = useState<string>("dark");
   const [infoOpen, setInfoOpen] = useState(false);
 
+  // ── Profiles States ──
+  const [profiles, setProfiles] = useState<ApiProfile[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
+  const [newProfileName, setNewProfileName] = useState("");
+  const [showAddProfileInput, setShowAddProfileInput] = useState(false);
+  const [showDeleteConfirmId, setShowDeleteConfirmId] = useState<string>("");
+
   // ── API Keys States ──
   const [geminiApiKey, setGeminiApiKey] = useState("");
   const [openaiApiKey, setOpenaiApiKey] = useState("");
   const [openaiBaseUrl, setOpenaiBaseUrl] = useState("");
   const [openaiChatModel, setOpenaiChatModel] = useState("");
 
+  // ── Transcription settings states ──
+  const [transcriptionProvider, setTranscriptionProvider] = useState("gemini");
+  const [customTranscribeKey, setCustomTranscribeKey] = useState("");
+  const [customTranscribeBase, setCustomTranscribeBase] = useState("");
+  const [customTranscribeModel, setCustomTranscribeModel] = useState("whisper-1");
+  const [showTranscribeKey, setShowTranscribeKey] = useState(false);
+
   const [profilesOpen, setProfilesOpen] = useState(false);
   const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [showOpenaiKey, setShowOpenaiKey] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [clipSummary, setClipSummary] = useState(false);
 
 
 
@@ -158,11 +186,44 @@ export default function Home() {
       setTheme(savedTheme);
     }
     
-    // 2. API Keys
-    setGeminiApiKey(localStorage.getItem("clipforge_gemini_api_key") || "");
-    setOpenaiApiKey(localStorage.getItem("clipforge_openai_api_key") || "");
-    setOpenaiBaseUrl(localStorage.getItem("clipforge_openai_base_url") || "");
-    setOpenaiChatModel(localStorage.getItem("clipforge_openai_chat_model") || "");
+    // 2. Profiles
+    const savedProfiles = localStorage.getItem("clipforge_profiles_v3");
+    const savedSelectedId = localStorage.getItem("clipforge_selected_profile_id_v3");
+    let initialProfiles: ApiProfile[] = [];
+    let initialSelectedId = "";
+    
+    if (savedProfiles) {
+      try {
+        initialProfiles = JSON.parse(savedProfiles);
+      } catch {}
+    }
+    
+    if (initialProfiles.length === 0) {
+      const defaultProf: ApiProfile = {
+        id: "prof_default",
+        name: "My Keys",
+        geminiApiKey: localStorage.getItem("clipforge_gemini_api_key") || "",
+        openaiApiKey: localStorage.getItem("clipforge_openai_api_key") || "",
+        openaiBaseUrl: localStorage.getItem("clipforge_openai_base_url") || "",
+        openaiChatModel: localStorage.getItem("clipforge_openai_chat_model") || "",
+        transcriptionProvider: localStorage.getItem("clipforge_transcription_provider") || "gemini",
+        customTranscribeKey: localStorage.getItem("clipforge_custom_transcribe_key") || "",
+        customTranscribeBase: localStorage.getItem("clipforge_custom_transcribe_base") || "",
+        customTranscribeModel: localStorage.getItem("clipforge_custom_transcribe_model") || "whisper-1",
+      };
+      initialProfiles = [defaultProf];
+      initialSelectedId = "prof_default";
+      localStorage.setItem("clipforge_profiles_v3", JSON.stringify(initialProfiles));
+      localStorage.setItem("clipforge_selected_profile_id_v3", "prof_default");
+    } else {
+      initialSelectedId = savedSelectedId || initialProfiles[0].id;
+    }
+    
+    setProfiles(initialProfiles);
+    setSelectedProfileId(initialSelectedId);
+
+    const savedClipSummary = localStorage.getItem("clipforge_clip_summary");
+    if (savedClipSummary) setClipSummary(savedClipSummary === "true");
 
     // 3. History
     const savedHistory = localStorage.getItem("clipforge_history");
@@ -219,7 +280,29 @@ export default function Home() {
     }
   }, [theme, mounted]);
 
-  // Save profiles & selected ID removed (using direct inputs saved on button click)
+  // Load selected profile settings into inputs
+  useEffect(() => {
+    if (selectedProfileId) {
+      const active = profiles.find((p) => p.id === selectedProfileId);
+      if (active) {
+        setGeminiApiKey(active.geminiApiKey || "");
+        setOpenaiApiKey(active.openaiApiKey || "");
+        setOpenaiBaseUrl(active.openaiBaseUrl || "");
+        setOpenaiChatModel(active.openaiChatModel || "");
+        setTranscriptionProvider(active.transcriptionProvider || "gemini");
+        setCustomTranscribeKey(active.customTranscribeKey || "");
+        setCustomTranscribeBase(active.customTranscribeBase || "");
+        setCustomTranscribeModel(active.customTranscribeModel || "whisper-1");
+      }
+    }
+  }, [selectedProfileId, profiles]);
+
+  // Save selected profile ID to localStorage
+  useEffect(() => {
+    if (mounted && selectedProfileId) {
+      localStorage.setItem("clipforge_selected_profile_id_v3", selectedProfileId);
+    }
+  }, [selectedProfileId, mounted]);
 
   // Save history to localStorage
   useEffect(() => {
@@ -284,6 +367,12 @@ export default function Home() {
       localStorage.setItem("clipforge_split_screen", splitScreen.toString());
     }
   }, [splitScreen, mounted]);
+
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("clipforge_clip_summary", clipSummary.toString());
+    }
+  }, [clipSummary, mounted]);
 
   // Save meta and url cache to localStorage
   useEffect(() => {
@@ -404,6 +493,33 @@ export default function Home() {
     setShowClearConfirm(false);
   };
 
+  const handleSaveProfile = () => {
+    if (!selectedProfileId) return;
+    const updated = profiles.map((p) => {
+      if (p.id === selectedProfileId) {
+        return {
+          ...p,
+          geminiApiKey,
+          openaiApiKey,
+          openaiBaseUrl,
+          openaiChatModel,
+          transcriptionProvider,
+          customTranscribeKey,
+          customTranscribeBase,
+          customTranscribeModel,
+        };
+      }
+      return p;
+    });
+    setProfiles(updated);
+    localStorage.setItem("clipforge_profiles_v3", JSON.stringify(updated));
+    setSaveSuccess(true);
+    setTimeout(() => {
+      setSaveSuccess(false);
+      setProfilesOpen(false);
+    }, 1000);
+  };
+
   const handleProcess = async () => {
     if (!url) return;
     setError("");
@@ -430,6 +546,11 @@ export default function Home() {
         watermark_text: addWatermark ? watermarkText : "",
         subtitle_position: subtitleStyle !== "none" ? subtitlePosition : "bottom",
         split_screen: splitScreen,
+        clip_summary: clipSummary,
+        transcription_provider: transcriptionProvider,
+        custom_transcribe_key: customTranscribeKey.trim() || undefined,
+        custom_transcribe_base: customTranscribeBase.trim() || undefined,
+        custom_transcribe_model: customTranscribeModel.trim() || undefined,
       });
       setJobId(job_id);
       setJob({ status: "queued", progress: 0, clips: [] });
@@ -605,106 +726,305 @@ export default function Home() {
                   <span><strong>Security Guarantee:</strong> Your API keys are saved locally in your own browser's secure cache (localStorage). They never pass through our servers and are sent directly to the official AI provider endpoints.</span>
                 </div>
 
-                <div className="space-y-2.5 border border-white/5 rounded-lg p-3 bg-black/10">
-                  <div className="space-y-2">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[9px] font-mono text-white/30 uppercase">Gemini API Key</label>
+                {/* Profiles Selector and Delete */}
+                <div className="space-y-1.5 border border-white/5 rounded-lg p-2.5 bg-black/15 animate-scale-up">
+                  <label className="text-[9px] font-mono text-white/30 uppercase">Active Profile</label>
+                  <div className="flex gap-2">
+                    <select
+                      value={selectedProfileId}
+                      onChange={(e) => setSelectedProfileId(e.target.value)}
+                      className="flex-1 bg-surface-900 border border-white/10 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-semibold cursor-pointer"
+                    >
+                      <option value="" disabled>-- Select Profile --</option>
+                      {profiles.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          👤 {p.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    {selectedProfileId && (
+                      showDeleteConfirmId === selectedProfileId ? (
+                        <div className="flex items-center gap-1 bg-red-950/20 border border-red-500/20 px-2 rounded-lg animate-scale-up">
+                          <span className="text-[9px] text-red-400 font-bold">Delete?</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = profiles.filter((p) => p.id !== selectedProfileId);
+                              setProfiles(updated);
+                              localStorage.setItem("clipforge_profiles_v3", JSON.stringify(updated));
+                              setSelectedProfileId(updated.length > 0 ? updated[0].id : "");
+                              setShowDeleteConfirmId("");
+                            }}
+                            className="text-[9px] bg-red-600 text-white px-1.5 py-0.5 rounded font-bold"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowDeleteConfirmId("")}
+                            className="text-[9px] bg-white/10 text-white/80 px-1.5 py-0.5 rounded font-bold"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
                         <button
                           type="button"
-                          onClick={() => setShowGeminiKey(!showGeminiKey)}
-                          className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
+                          onClick={() => setShowDeleteConfirmId(selectedProfileId)}
+                          className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 px-2.5 rounded-lg text-xs transition-colors flex items-center justify-center"
+                          title="Delete active profile"
                         >
-                          {showGeminiKey ? <EyeOff size={10} /> : <Eye size={10} />}
-                          {showGeminiKey ? "Hide" : "Show"}
+                          <Trash2 size={12} />
                         </button>
-                      </div>
-                      <input
-                        type={showGeminiKey ? "text" : "password"}
-                        value={geminiApiKey}
-                        onChange={(e) => setGeminiApiKey(e.target.value)}
-                        placeholder="AIzaSy..."
-                        className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
-                      />
-                      <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For Google Gemini models & free-tier audio transcription.</p>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[9px] font-mono text-white/30 uppercase">OpenAI API Key</label>
-                        <button
-                          type="button"
-                          onClick={() => setShowOpenaiKey(!showOpenaiKey)}
-                          className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
-                        >
-                          {showOpenaiKey ? <EyeOff size={10} /> : <Eye size={10} />}
-                          {showOpenaiKey ? "Hide" : "Show"}
-                        </button>
-                      </div>
-                      <input
-                        type={showOpenaiKey ? "text" : "password"}
-                        value={openaiApiKey}
-                        onChange={(e) => setOpenaiApiKey(e.target.value)}
-                        placeholder="sk-..."
-                        className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
-                      />
-                      <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For OpenAI Whisper transcription & GPT moments analysis.</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-mono text-white/30 uppercase">Base URL</label>
-                      <input
-                        type="text"
-                        value={openaiBaseUrl}
-                        onChange={(e) => setOpenaiBaseUrl(e.target.value)}
-                        placeholder="https://api.openai.com/v1"
-                        className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
-                      />
-                      <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Use custom endpoints (e.g. dinoiki, DeepSeek, OpenRouter) to save quota.</p>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-mono text-white/30 uppercase">Model</label>
-                      <input
-                        type="text"
-                        value={openaiChatModel}
-                        onChange={(e) => setOpenaiChatModel(e.target.value)}
-                        placeholder="gpt-4o"
-                        className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
-                      />
-                      <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Model name for moments analysis.</p>
-                    </div>
-                  </div>
-
-                  {/* Save button for user assurance and feedback */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      localStorage.setItem("clipforge_gemini_api_key", geminiApiKey.trim());
-                      localStorage.setItem("clipforge_openai_api_key", openaiApiKey.trim());
-                      localStorage.setItem("clipforge_openai_base_url", openaiBaseUrl.trim());
-                      localStorage.setItem("clipforge_openai_chat_model", openaiChatModel.trim());
-                      setSaveSuccess(true);
-                      setTimeout(() => {
-                        setSaveSuccess(false);
-                        setProfilesOpen(false); // Close setting panel to indicate success
-                      }, 1000);
-                    }}
-                    className="w-full bg-indigo-500 hover:bg-indigo-600 text-pure-white py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow shadow-indigo-500/10 mt-3"
-                  >
-                    {saveSuccess ? (
-                      <>✓ Saved Successfully!</>
-                    ) : (
-                      <>💾 Save API Key Settings</>
+                      )
                     )}
-                  </button>
+                  </div>
+
+                  {/* Add Profile Form (Inline, no native popups) */}
+                  {showAddProfileInput ? (
+                    <div className="flex gap-1.5 items-center animate-scale-up pt-1.5 border-t border-white/5 mt-1.5">
+                      <input
+                        type="text"
+                        placeholder="Profile name..."
+                        value={newProfileName}
+                        onChange={(e) => setNewProfileName(e.target.value)}
+                        className="flex-1 bg-surface-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-indigo-500/45"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newProfileName.trim()) return;
+                          const newProf: ApiProfile = {
+                            id: "prof_" + Math.random().toString(36).substring(2, 11),
+                            name: newProfileName.trim(),
+                            geminiApiKey: "",
+                            openaiApiKey: "",
+                            openaiBaseUrl: "",
+                            openaiChatModel: "",
+                            transcriptionProvider: "gemini",
+                            customTranscribeKey: "",
+                            customTranscribeBase: "",
+                            customTranscribeModel: "whisper-1",
+                          };
+                          const updated = [...profiles, newProf];
+                          setProfiles(updated);
+                          localStorage.setItem("clipforge_profiles_v3", JSON.stringify(updated));
+                          setSelectedProfileId(newProf.id);
+                          setNewProfileName("");
+                          setShowAddProfileInput(false);
+                        }}
+                        className="bg-indigo-500 hover:bg-indigo-600 text-pure-white px-2.5 py-1 rounded-lg text-xs font-bold transition-all"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewProfileName("");
+                          setShowAddProfileInput(false);
+                        }}
+                        className="text-white/40 hover:text-white/60 text-xs px-1"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddProfileInput(true)}
+                      className="w-full border border-dashed border-white/10 hover:border-indigo-500/30 hover:bg-white/[0.01] text-white/50 hover:text-indigo-400 py-1.5 rounded-lg text-[10px] font-semibold transition-all mt-1 flex items-center justify-center gap-1"
+                    >
+                      <Plus size={10} /> Create New Profile
+                    </button>
+                  )}
                 </div>
 
-                {(!geminiApiKey && !openaiApiKey) && (
+                {selectedProfileId && (
+                  <div className="space-y-2.5 border border-white/5 rounded-lg p-3 bg-black/10 animate-scale-up">
+                    {/* Rename profile inline */}
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-mono text-white/30 uppercase">Profile Name</label>
+                      <input
+                        type="text"
+                        value={profiles.find((p) => p.id === selectedProfileId)?.name || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setProfiles((prev) =>
+                            prev.map((p) => (p.id === selectedProfileId ? { ...p, name: val } : p))
+                          );
+                        }}
+                        className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[9px] font-mono text-white/30 uppercase">Gemini API Key</label>
+                          <button
+                            type="button"
+                            onClick={() => setShowGeminiKey(!showGeminiKey)}
+                            className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
+                          >
+                            {showGeminiKey ? <EyeOff size={10} /> : <Eye size={10} />}
+                            {showGeminiKey ? "Hide" : "Show"}
+                          </button>
+                        </div>
+                        <input
+                          type={showGeminiKey ? "text" : "password"}
+                          value={geminiApiKey}
+                          onChange={(e) => setGeminiApiKey(e.target.value)}
+                          placeholder="AIzaSy..."
+                          className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
+                        />
+                        <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For Google Gemini models.</p>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[9px] font-mono text-white/30 uppercase">OpenAI API Key</label>
+                          <button
+                            type="button"
+                            onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                            className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
+                          >
+                            {showOpenaiKey ? <EyeOff size={10} /> : <Eye size={10} />}
+                            {showOpenaiKey ? "Hide" : "Show"}
+                          </button>
+                        </div>
+                        <input
+                          type={showOpenaiKey ? "text" : "password"}
+                          value={openaiApiKey}
+                          onChange={(e) => setOpenaiApiKey(e.target.value)}
+                          placeholder="sk-..."
+                          className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
+                        />
+                        <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For OpenAI GPT models.</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-mono text-white/30 uppercase">Base URL</label>
+                        <input
+                          type="text"
+                          value={openaiBaseUrl}
+                          onChange={(e) => setOpenaiBaseUrl(e.target.value)}
+                          placeholder="https://api.openai.com/v1"
+                          className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                        />
+                        <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Custom proxy (dinoiki, DeepSeek, etc.).</p>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-mono text-white/30 uppercase">Model</label>
+                        <input
+                          type="text"
+                          value={openaiChatModel}
+                          onChange={(e) => setOpenaiChatModel(e.target.value)}
+                          placeholder="gpt-4o"
+                          className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                        />
+                        <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Moments analysis model.</p>
+                      </div>
+                    </div>
+
+                    {/* Audio Transcription Settings */}
+                    <div className="space-y-1.5 border-t border-white/5 pt-2.5 mt-2.5">
+                      <label className="text-[10px] font-mono text-white/40 uppercase">Audio Transcription</label>
+                      
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-mono text-white/30 uppercase">Transcription Provider</label>
+                        <select
+                          value={transcriptionProvider}
+                          onChange={(e) => setTranscriptionProvider(e.target.value)}
+                          className="w-full bg-surface-900 border border-white/10 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-indigo-500/40 text-white cursor-pointer"
+                        >
+                          <option value="gemini">Google Gemini API (Free Tier available)</option>
+                          <option value="openai">OpenAI Whisper API (Paid)</option>
+                          <option value="custom">Custom/Universal API Proxy (dinoiki, etc.)</option>
+                        </select>
+                      </div>
+
+                      {transcriptionProvider === "gemini" && (
+                        <p className="text-[9px] text-indigo-300 bg-indigo-500/5 p-2 rounded border border-indigo-500/10 leading-snug">
+                          💡 Gemini free tier transcribes audio files within Google AI Studio quota limits. Uses the Gemini key set above.
+                        </p>
+                      )}
+
+                      {transcriptionProvider !== "gemini" && (
+                        <div className="space-y-2.5 border border-white/5 rounded-lg p-2.5 bg-black/10">
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[9px] font-mono text-white/30 uppercase">Transcribe API Key</label>
+                              <button
+                                type="button"
+                                onClick={() => setShowTranscribeKey(!showTranscribeKey)}
+                                className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
+                              >
+                                {showTranscribeKey ? <EyeOff size={10} /> : <Eye size={10} />}
+                                {showTranscribeKey ? "Hide" : "Show"}
+                              </button>
+                            </div>
+                            <input
+                              type={showTranscribeKey ? "text" : "password"}
+                              value={customTranscribeKey}
+                              onChange={(e) => setCustomTranscribeKey(e.target.value)}
+                              placeholder="Leave blank to use main OpenAI key..."
+                              className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
+                            />
+                          </div>
+
+                          {transcriptionProvider === "custom" && (
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-mono text-white/30 uppercase">Transcribe Base URL</label>
+                                <input
+                                  type="text"
+                                  value={customTranscribeBase}
+                                  onChange={(e) => setCustomTranscribeBase(e.target.value)}
+                                  placeholder="e.g. https://api.openai.com/v1"
+                                  className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-mono text-white/30 uppercase">Transcribe Model</label>
+                                <input
+                                  type="text"
+                                  value={customTranscribeModel}
+                                  onChange={(e) => setCustomTranscribeModel(e.target.value)}
+                                  placeholder="whisper-1"
+                                  className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Save button for user assurance and feedback */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleSaveProfile();
+                      }}
+                      className="w-full bg-indigo-500 hover:bg-indigo-600 text-pure-white py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow shadow-indigo-500/10 mt-3"
+                    >
+                      {saveSuccess ? (
+                        <>✓ Saved Successfully!</>
+                      ) : (
+                        <>💾 Save Profile Settings</>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {!selectedProfileId && (
                   <p className="text-[10px] text-white/35 leading-relaxed italic bg-black/15 p-2.5 rounded-lg border border-white/5">
-                    💡 No keys entered: The web app is currently using the default API keys configured in the backend `.env` file. Fill in these fields to override them.
+                    💡 No active profile selected. To override backend API configurations, click &quot;Create New Profile&quot; above.
                   </p>
                 )}
               </div>
@@ -989,15 +1309,26 @@ export default function Home() {
                 <span className="text-[11px] text-white/60 hover:text-white/80 transition-colors">🔊 Audio Fade (1s)</span>
               </label>
               {mode === "ai" && (
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={useVariation}
-                    onChange={(e) => setUseVariation(e.target.checked)}
-                    className="accent-indigo-500 w-3.5 h-3.5 rounded border-white/10"
-                  />
-                  <span className="text-[11px] text-white/60 hover:text-white/80 transition-colors">🔄 Variation</span>
-                </label>
+                <>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={useVariation}
+                      onChange={(e) => setUseVariation(e.target.checked)}
+                      className="accent-indigo-500 w-3.5 h-3.5 rounded border-white/10"
+                    />
+                    <span className="text-[11px] text-white/60 hover:text-white/80 transition-colors">🔄 Variation</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={clipSummary}
+                      onChange={(e) => setClipSummary(e.target.checked)}
+                      className="accent-indigo-500 w-3.5 h-3.5 rounded border-white/10"
+                    />
+                    <span className="text-[11px] text-white/60 hover:text-white/80 transition-colors">📝 Scene Summary</span>
+                  </label>
+                </>
               )}
             </div>
           </div>
@@ -1926,6 +2257,17 @@ function ClipCard({
             <div className="mb-3.5 bg-white/[0.01] border border-white/[0.03] p-2.5 rounded-xl">
               <p className="text-[11px] text-white/50 italic leading-relaxed line-clamp-2">
                 &quot;{clip.hook}&quot;
+              </p>
+            </div>
+          )}
+
+          {clip.summary && (
+            <div className="mb-3.5 bg-indigo-500/5 border border-indigo-500/10 p-2.5 rounded-xl">
+              <span className="text-[9px] font-mono text-indigo-300 uppercase font-semibold flex items-center gap-1">
+                📝 Scene Summary
+              </span>
+              <p className="text-[10.5px] text-white/70 leading-relaxed mt-1 whitespace-pre-line">
+                {clip.summary}
               </p>
             </div>
           )}

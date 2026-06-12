@@ -42,30 +42,41 @@ def transcribe_video(
     gemini_api_key: str = None,
     openai_api_key: str = None,
     openai_base_url: str = None,
-    openai_chat_model: str = None
+    openai_chat_model: str = None,
+    transcription_provider: str = "gemini",
+    custom_transcribe_key: str = "",
+    custom_transcribe_base: str = "",
+    custom_transcribe_model: str = ""
 ) -> dict:
     """Transcribe video and return full transcript with word-level timestamps using cloud APIs."""
     audio_path = _extract_audio(video_path)
     
-    eff_gemini_key = gemini_api_key if gemini_api_key else settings.GEMINI_API_KEY
-    eff_openai_key = openai_api_key if openai_api_key else settings.OPENAI_API_KEY
-    eff_openai_base = openai_base_url if openai_base_url else settings.OPENAI_BASE_URL
-    eff_openai_model = openai_chat_model if openai_chat_model else settings.OPENAI_CHAT_MODEL
-    
     try:
-        is_custom_openai = eff_openai_base != "" and "api.openai.com" not in eff_openai_base
-        gemini_configured = eff_gemini_key != "" and not eff_gemini_key.startswith("AIza...")
-        
-        # If using official OpenAI, use OpenAI. Otherwise, if Gemini is configured, prefer Gemini.
-        if eff_openai_key and not is_custom_openai:
-            return _transcribe_openai(audio_path, eff_openai_key, eff_openai_base, eff_openai_model)
-        elif gemini_configured:
-            return _transcribe_gemini(audio_path, eff_gemini_key)
-        elif eff_openai_key:
-            # Fallback to custom OpenAI if Gemini is not set up
-            return _transcribe_openai(audio_path, eff_openai_key, eff_openai_base, eff_openai_model)
-        else:
-            raise ValueError("Neither a valid GEMINI_API_KEY nor an official OPENAI_API_KEY is configured for transcription.")
+        if transcription_provider == "openai":
+            key = custom_transcribe_key if custom_transcribe_key else (openai_api_key if openai_api_key else settings.OPENAI_API_KEY)
+            base = "https://api.openai.com/v1"
+            model = "whisper-1"
+            if not key:
+                raise ValueError("OpenAI API Key is required for transcription when 'openai' provider is selected.")
+            return _transcribe_openai(audio_path, key, base, model)
+            
+        elif transcription_provider == "custom":
+            key = custom_transcribe_key if custom_transcribe_key else (openai_api_key if openai_api_key else settings.OPENAI_API_KEY)
+            base = custom_transcribe_base if custom_transcribe_base else (openai_base_url if openai_base_url else settings.OPENAI_BASE_URL)
+            model = custom_transcribe_model if custom_transcribe_model else (openai_chat_model if openai_chat_model else "whisper-1")
+            if not key or not base:
+                raise ValueError("Both API Key and Base URL are required for Custom/Universal transcription.")
+            return _transcribe_openai(audio_path, key, base, model)
+            
+        else: # "gemini"
+            key = custom_transcribe_key if custom_transcribe_key else (gemini_api_key if gemini_api_key else settings.GEMINI_API_KEY)
+            if not key:
+                # Fallback to OpenAI if Gemini key is empty but OpenAI key exists
+                fallback_openai = openai_api_key if openai_api_key else settings.OPENAI_API_KEY
+                if fallback_openai:
+                    return _transcribe_openai(audio_path, fallback_openai, settings.OPENAI_BASE_URL, settings.OPENAI_CHAT_MODEL)
+                raise ValueError("Gemini API Key is required for Google Gemini transcription (Free Tier).")
+            return _transcribe_gemini(audio_path, key)
     finally:
         # Clean up the temp audio file if it was created
         if audio_path != video_path and os.path.exists(audio_path):
@@ -83,9 +94,12 @@ def _transcribe_openai(audio_path: str, api_key: str, base_url: str, chat_model:
     # Determine the Whisper model name.
     # For custom OpenAI-compatible proxies (like dinoiki), the transcription model is often gpt-4o-mini-transcribe or similar.
     # If the custom model ends with -transcribe, use it. Otherwise map.
-    whisper_model = settings.OPENAI_WHISPER_MODEL
-    if chat_model and "gemini" in chat_model:
-        whisper_model = chat_model + "-transcribe" if not chat_model.endswith("-transcribe") else chat_model
+    whisper_model = chat_model if chat_model else settings.OPENAI_WHISPER_MODEL
+    if whisper_model and not any(x in whisper_model.lower() for x in ["whisper", "transcribe", "large", "base", "tiny", "small", "medium"]):
+        if "gemini" in whisper_model.lower():
+            whisper_model = whisper_model + "-transcribe" if not whisper_model.endswith("-transcribe") else whisper_model
+        else:
+            whisper_model = "whisper-1"
     
     with open(audio_path, "rb") as audio_file:
         response = client.audio.transcriptions.create(

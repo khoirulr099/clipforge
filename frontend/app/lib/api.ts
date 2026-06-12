@@ -31,6 +31,11 @@ export interface ProcessRequest {
   watermark_text?: string;
   subtitle_position?: string;
   split_screen?: boolean;
+  clip_summary?: boolean;
+  transcription_provider?: string;
+  custom_transcribe_key?: string;
+  custom_transcribe_base?: string;
+  custom_transcribe_model?: string;
 }
 
 export interface Clip {
@@ -44,6 +49,7 @@ export interface Clip {
   duration: number;
   clip_url: string;
   srt_url: string;
+  summary?: string;
 }
 
 export interface JobStatus {
