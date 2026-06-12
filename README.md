@@ -63,6 +63,12 @@ Ensure you have the following installed on your machine:
 
 ### 🔧 Installation & Setup
 
+#### 0. Clone the Repository
+```bash
+git clone https://github.com/khoirulr099/clipforge.git
+cd clipforge
+```
+
 #### 1. Backend Configuration
 ```bash
 cd backend
@@ -185,6 +191,12 @@ ClipForge adalah platform web modern untuk mengekstrak momen-momen menarik secar
 5. **Akun Supabase** (Opsional - hanya jika ingin menyimpan klip di cloud).
 
 ### 🔧 Instalasi & Konfigurasi
+
+#### 0. Clone Repository
+```bash
+git clone https://github.com/khoirulr099/clipforge.git
+cd clipforge
+```
 
 #### 1. Konfigurasi Backend (Python FastAPI)
 ```bash
