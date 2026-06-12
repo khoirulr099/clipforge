@@ -1057,66 +1057,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Manual Cut Panel */}
-          {mode === "manual" && (
-            <div className="space-y-3 border border-white/5 bg-surface-900/50 rounded-xl p-3.5">
-              <p className="text-[10px] font-mono text-white/40 uppercase tracking-widest flex items-center justify-between">
-                <span>Add Custom Clips</span>
-                <span className="text-indigo-400">({manualClips.length} added)</span>
-              </p>
-              <div className="flex gap-2 items-end">
-                <div className="flex-1 space-y-1">
-                  <label className="text-[10px] text-white/40">Start (MM:SS)</label>
-                  <input
-                    value={manualStart}
-                    onChange={(e) => setManualStart(e.target.value)}
-                    className="w-full bg-surface-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500/40"
-                  />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <label className="text-[10px] text-white/40">End (MM:SS)</label>
-                  <input
-                    value={manualEnd}
-                    onChange={(e) => setManualEnd(e.target.value)}
-                    className="w-full bg-surface-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500/40"
-                  />
-                </div>
-                <button
-                  onClick={addManualClip}
-                  className="bg-indigo-500 hover:bg-indigo-600 text-pure-white px-2.5 py-2.5 rounded-lg transition-all"
-                  title="Add Clip"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
 
-              {manualClips.length > 0 && (
-                <div className="space-y-1.5 pt-2 border-t border-white/5 max-h-[120px] overflow-y-auto scrollbar-premium">
-                  {manualClips.map((c, i) => (
-                    <div key={i} className="flex items-center justify-between bg-surface-900 rounded-lg px-2.5 py-1.5 border border-white/5">
-                      <span className="text-[11px] text-white/60 font-mono">
-                        #{i + 1} · {formatDuration(c.start)} → {formatDuration(c.end)} ({c.end - c.start}s)
-                      </span>
-                      <button
-                        onClick={() => setManualClips((prev) => prev.filter((_, j) => j !== i))}
-                        className="text-white/20 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  ))}
-                  <div className="flex justify-end pt-1">
-                    <button
-                      onClick={() => setManualClips([])}
-                      className="text-[10px] text-white/30 hover:text-white/50 transition-colors"
-                    >
-                      Clear all manual clips
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Section 4: Advanced Tuning parameters */}
           {mode !== "manual" && (
@@ -1532,8 +1473,8 @@ export default function Home() {
 
           {/* Manual Video Player Editor & Timeline Slider */}
           {mode === "manual" && url && (
-            <div className="space-y-4 bg-surface-800 border border-white/5 p-5 rounded-3xl shadow-xl">
-              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+            <div className="bg-surface-800 border border-white/5 p-5 rounded-3xl shadow-xl">
+              <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
                 <div className="flex items-center gap-2">
                   <Video className="text-indigo-400 w-5 h-5" />
                   <h3 className="font-heading font-bold text-sm text-white">Manual Timeline Clip Editor</h3>
@@ -1550,255 +1491,307 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Player & Crop Simulator */}
-              <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-white/10 bg-black/80 flex items-center justify-center group/player">
-                {videoId ? (
-                  <iframe
-                    key={videoId}
-                    ref={iframeRef}
-                    src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1`}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    title="YouTube video player"
-                    onLoad={() => {
-                      // Subscribe to time updates via postMessage
-                      iframeRef.current?.contentWindow?.postMessage(
-                        JSON.stringify({ event: "listening" }),
-                        "*"
-                      );
-                    }}
-                  />
-                ) : (
-                  <div className="text-center text-xs text-white/30 p-10 font-mono">
-                    Visual player only supports YouTube links. Please type timestamps manually in the console.
-                  </div>
-                )}
-
-                {/* Crop simulator overlay */}
-                {showCropSimulator && videoId && (
-                  <div
-                    onClick={() => setShowCropSimulator(false)}
-                    className="absolute inset-0 pointer-events-none flex items-center justify-center cursor-pointer"
-                    title="Click to hide crop frame"
-                  >
-                    {format === "reels" ? (
-                      <div className="h-full aspect-[9/16] border-2 border-dashed border-indigo-400 bg-indigo-500/10 flex items-center justify-center shadow-[0_0_50px_rgba(99,102,241,0.25)] animate-pulse">
-                        <span className="text-[10px] font-mono text-indigo-300 font-bold bg-black/80 px-2.5 py-1 rounded-md border border-indigo-500/20">
-                          Reels 9:16 Crop Zone
-                        </span>
-                      </div>
-                    ) : format === "square" ? (
-                      <div className="h-full aspect-square border-2 border-dashed border-indigo-400 bg-indigo-500/10 flex items-center justify-center shadow-[0_0_50px_rgba(99,102,241,0.25)] animate-pulse">
-                        <span className="text-[10px] font-mono text-indigo-300 font-bold bg-black/80 px-2.5 py-1 rounded-md border border-indigo-500/20">
-                          Square 1:1 Crop Zone
-                        </span>
-                      </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left side: Player, Timeline Track, and Inline Compact Action Row (col-span 2) */}
+                <div className="lg:col-span-2 space-y-4">
+                  {/* Player & Crop Simulator */}
+                  <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-white/10 bg-black/80 flex items-center justify-center group/player">
+                    {videoId ? (
+                      <iframe
+                        key={videoId}
+                        ref={iframeRef}
+                        src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1`}
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        title="YouTube video player"
+                        onLoad={() => {
+                          // Subscribe to time updates via postMessage
+                          iframeRef.current?.contentWindow?.postMessage(
+                            JSON.stringify({ event: "listening" }),
+                            "*"
+                          );
+                        }}
+                      />
                     ) : (
-                      <div className="w-full h-full border-2 border-dashed border-indigo-400 bg-indigo-500/5 flex items-center justify-center">
-                        <span className="text-[10px] font-mono text-indigo-300 font-bold bg-black/80 px-2.5 py-1 rounded-md border border-indigo-500/20">
-                          Landscape 16:9 Zone
-                        </span>
+                      <div className="text-center text-xs text-white/30 p-10 font-mono">
+                        Visual player only supports YouTube links. Please type timestamps manually in the console.
+                      </div>
+                    )}
+
+                    {/* Crop simulator overlay */}
+                    {showCropSimulator && videoId && (
+                      <div
+                        onClick={() => setShowCropSimulator(false)}
+                        className="absolute inset-0 pointer-events-none flex items-center justify-center cursor-pointer"
+                        title="Click to hide crop frame"
+                      >
+                        {format === "reels" ? (
+                          <div className="h-full aspect-[9/16] border-2 border-dashed border-indigo-400 bg-indigo-500/10 flex items-center justify-center shadow-[0_0_50px_rgba(99,102,241,0.25)] animate-pulse">
+                            <span className="text-[10px] font-mono text-indigo-300 font-bold bg-black/80 px-2.5 py-1 rounded-md border border-indigo-500/20">
+                              Reels 9:16 Crop Zone
+                            </span>
+                          </div>
+                        ) : format === "square" ? (
+                          <div className="h-full aspect-square border-2 border-dashed border-indigo-400 bg-indigo-500/10 flex items-center justify-center shadow-[0_0_50px_rgba(99,102,241,0.25)] animate-pulse">
+                            <span className="text-[10px] font-mono text-indigo-300 font-bold bg-black/80 px-2.5 py-1 rounded-md border border-indigo-500/20">
+                              Square 1:1 Crop Zone
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full border-2 border-dashed border-indigo-400 bg-indigo-500/5 flex items-center justify-center">
+                            <span className="text-[10px] font-mono text-indigo-300 font-bold bg-black/80 px-2.5 py-1 rounded-md border border-indigo-500/20">
+                              Landscape 16:9 Zone
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
 
-              {/* Interactive Timeline Range Picker */}
-              {meta ? (
-                <div className="space-y-4 pt-2">
-
-                  {/* Visual Timeline Bar with S/E markers + playhead */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs font-mono mb-1">
-                      <span className="text-white/50 font-semibold flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse inline-block" />
-                        Timeline
-                        <span className="text-cyan-400 ml-1">{formatDuration(currentTime)}</span>
-                      </span>
-                      <span className="text-white/40">
-                        <span className="text-emerald-400">{formatDuration(manualStartSec)}</span>
-                        {" → "}
-                        <span className="text-rose-400">{formatDuration(manualEndSec)}</span>
-                        <span className="text-indigo-400 ml-1.5 font-bold">({manualEndSec - manualStartSec}s)</span>
-                      </span>
-                    </div>
-
-                    {/* Clickable timeline track */}
-                    <div
-                      className="relative h-4 bg-surface-800 rounded-full border border-surface-700/40 cursor-pointer my-4 flex items-center select-none"
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const pct = (e.clientX - rect.left) / rect.width;
-                        const targetSec = Math.round(pct * meta.duration);
-                        // Move whichever marker (S or E) is closer to click
-                        const distToStart = Math.abs(targetSec - manualStartSec);
-                        const distToEnd = Math.abs(targetSec - manualEndSec);
-                        if (distToStart <= distToEnd) {
-                          setManualStartSec(Math.min(targetSec, manualEndSec - 1));
-                        } else {
-                          setManualEndSec(Math.max(targetSec, manualStartSec + 1));
-                        }
-                        seekToTime(targetSec);
-                      }}
-                    >
-                      {/* Selected range fill */}
-                      <div
-                        className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-emerald-500/30 to-rose-500/30 border-l-2 border-l-emerald-500 border-r-2 border-r-rose-500"
-                        style={{
-                          left: `${(manualStartSec / meta.duration) * 100}%`,
-                          width: `${((manualEndSec - manualStartSec) / meta.duration) * 100}%`,
-                        }}
-                      />
-
-                      {/* Start Marker Pin (S - Green) */}
-                      <div
-                        className="absolute top-[-5px] bottom-[-5px] w-[2px] bg-emerald-500 z-10"
-                        style={{ left: `${(manualStartSec / meta.duration) * 100}%` }}
-                      >
-                        <div className="absolute top-[-13px] left-[-7px] w-4 h-4 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center shadow-lg shadow-emerald-500/50">
-                          <span className="text-[7px] font-black text-white font-mono">S</span>
-                        </div>
-                      </div>
-
-                      {/* End Marker Pin (E - Red) */}
-                      <div
-                        className="absolute top-[-5px] bottom-[-5px] w-[2px] bg-rose-500 z-10"
-                        style={{ left: `${(manualEndSec / meta.duration) * 100}%` }}
-                      >
-                        <div className="absolute top-[-13px] left-[-7px] w-4 h-4 rounded-full bg-rose-500 border-2 border-white flex items-center justify-center shadow-lg shadow-rose-500/50">
-                          <span className="text-[7px] font-black text-white font-mono">E</span>
-                        </div>
-                      </div>
-
-                      {/* Cyan Playhead (current video position) */}
-                      {meta.duration > 0 && (
-                        <div
-                          className="absolute top-[-7px] bottom-[-7px] w-[2px] bg-cyan-400 z-20 pointer-events-none transition-none"
-                          style={{ left: `${Math.min((currentTime / meta.duration) * 100, 100)}%` }}
-                        >
-                          {/* Diamond head */}
-                          <div className="absolute top-[-4px] left-[-4px] w-2.5 h-2.5 rotate-45 bg-cyan-400 border border-white shadow-md shadow-cyan-400/60" />
-                        </div>
-                      )}
-
-                      {/* Duration label inside the selected region */}
-                      {((manualEndSec - manualStartSec) / meta.duration) > 0.1 && (
-                        <div
-                          className="absolute top-0 bottom-0 flex items-center justify-center pointer-events-none"
-                          style={{
-                            left: `${(manualStartSec / meta.duration) * 100}%`,
-                            width: `${((manualEndSec - manualStartSec) / meta.duration) * 100}%`,
-                          }}
-                        >
-                          <span className="text-[9px] font-mono font-bold text-white/60 bg-black/50 px-1 rounded">
-                            {manualEndSec - manualStartSec}s
+                  {/* Interactive Timeline Range Picker */}
+                  {meta ? (
+                    <div className="space-y-4 pt-2">
+                      {/* Visual Timeline Bar with S/E markers + playhead */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs font-mono mb-1">
+                          <span className="text-white/50 font-semibold flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse inline-block" />
+                            Timeline
+                            <span className="text-cyan-400 ml-1">{formatDuration(currentTime)}</span>
+                          </span>
+                          <span className="text-white/40">
+                            <span className="text-emerald-400">{formatDuration(manualStartSec)}</span>
+                            {" → "}
+                            <span className="text-rose-400">{formatDuration(manualEndSec)}</span>
+                            <span className="text-indigo-400 ml-1.5 font-bold">({manualEndSec - manualStartSec}s)</span>
                           </span>
                         </div>
+
+                        {/* Clickable timeline track */}
+                        <div
+                          className="relative h-4 bg-surface-800 rounded-full border border-surface-700/40 cursor-pointer my-4 flex items-center select-none"
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const pct = (e.clientX - rect.left) / rect.width;
+                            const targetSec = Math.round(pct * meta.duration);
+                            // Move whichever marker (S or E) is closer to click
+                            const distToStart = Math.abs(targetSec - manualStartSec);
+                            const distToEnd = Math.abs(targetSec - manualEndSec);
+                            if (distToStart <= distToEnd) {
+                              setManualStartSec(Math.min(targetSec, manualEndSec - 1));
+                            } else {
+                              setManualEndSec(Math.max(targetSec, manualStartSec + 1));
+                            }
+                            seekToTime(targetSec);
+                          }}
+                        >
+                          {/* Selected range fill */}
+                          <div
+                            className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-emerald-500/30 to-rose-500/30 border-l-2 border-l-emerald-500 border-r-2 border-r-rose-500"
+                            style={{
+                              left: `${(manualStartSec / meta.duration) * 100}%`,
+                              width: `${((manualEndSec - manualStartSec) / meta.duration) * 100}%`,
+                            }}
+                          />
+
+                          {/* Start Marker Pin (S - Green) */}
+                          <div
+                            className="absolute top-[-5px] bottom-[-5px] w-[2px] bg-emerald-500 z-10"
+                            style={{ left: `${(manualStartSec / meta.duration) * 100}%` }}
+                          >
+                            <div className="absolute top-[-13px] left-[-7px] w-4 h-4 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center shadow-lg shadow-emerald-500/50">
+                              <span className="text-[7px] font-black text-white font-mono">S</span>
+                            </div>
+                          </div>
+
+                          {/* End Marker Pin (E - Red) */}
+                          <div
+                            className="absolute top-[-5px] bottom-[-5px] w-[2px] bg-rose-500 z-10"
+                            style={{ left: `${(manualEndSec / meta.duration) * 100}%` }}
+                          >
+                            <div className="absolute top-[-13px] left-[-7px] w-4 h-4 rounded-full bg-rose-500 border-2 border-white flex items-center justify-center shadow-lg shadow-rose-500/50">
+                              <span className="text-[7px] font-black text-white font-mono">E</span>
+                            </div>
+                          </div>
+
+                          {/* Cyan Playhead (current video position) */}
+                          {meta.duration > 0 && (
+                            <div
+                              className="absolute top-[-7px] bottom-[-7px] w-[2px] bg-cyan-400 z-20 pointer-events-none transition-none"
+                              style={{ left: `${Math.min((currentTime / meta.duration) * 100, 100)}%` }}
+                            >
+                              {/* Diamond head */}
+                              <div className="absolute top-[-4px] left-[-4px] w-2.5 h-2.5 rotate-45 bg-cyan-400 border border-white shadow-md shadow-cyan-400/60" />
+                            </div>
+                          )}
+
+                          {/* Duration label inside the selected region */}
+                          {((manualEndSec - manualStartSec) / meta.duration) > 0.1 && (
+                            <div
+                              className="absolute top-0 bottom-0 flex items-center justify-center pointer-events-none"
+                              style={{
+                                left: `${(manualStartSec / meta.duration) * 100}%`,
+                                width: `${((manualEndSec - manualStartSec) / meta.duration) * 100}%`,
+                              }}
+                            >
+                              <span className="text-[9px] font-mono font-bold text-white/60 bg-black/50 px-1 rounded">
+                                {manualEndSec - manualStartSec}s
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-white/25 font-mono">
+                          Klik timeline untuk pindah marker terdekat • Putar video lalu tekan 📍 untuk tandai
+                        </p>
+                      </div>
+
+                      {/* Inline Compact Action Row */}
+                      <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-surface-900/60 border border-white/5 p-3 rounded-2xl animate-scale-up">
+                        <div className="flex gap-2 w-full md:w-auto">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const t = Math.floor(currentTime);
+                              setManualStartSec(t);
+                              if (t >= manualEndSec) setManualEndSec(Math.min(meta.duration, t + 1));
+                            }}
+                            className="flex-1 md:flex-initial text-xs bg-emerald-500/10 hover:bg-emerald-500/25 active:scale-95 text-emerald-400 border border-emerald-500/25 px-3 py-2 rounded-xl transition-all font-bold flex items-center justify-center gap-1.5"
+                            title={`Tandai waktu saat ini (${formatDuration(currentTime)}) sebagai Start`}
+                          >
+                            📍 Mark Start ({formatDuration(currentTime)})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const t = Math.floor(currentTime);
+                              setManualEndSec(t);
+                              if (t <= manualStartSec) setManualStartSec(Math.max(0, t - 1));
+                            }}
+                            className="flex-1 md:flex-initial text-xs bg-rose-500/10 hover:bg-rose-500/25 active:scale-95 text-rose-400 border border-rose-500/25 px-3 py-2 rounded-xl transition-all font-bold flex items-center justify-center gap-1.5"
+                            title={`Tandai waktu saat ini (${formatDuration(currentTime)}) sebagai End`}
+                          >
+                            📍 Mark End ({formatDuration(currentTime)})
+                          </button>
+                        </div>
+
+                        <div className="text-xs font-mono text-center md:text-left">
+                          <span className="text-white/40">Range:</span>{" "}
+                          <span className="text-emerald-400 font-bold">{formatDuration(manualStartSec)}</span>{" "}
+                          ➔{" "}
+                          <span className="text-rose-400 font-bold">{formatDuration(manualEndSec)}</span>{" "}
+                          <span className="text-indigo-400 font-bold">({manualEndSec - manualStartSec}s)</span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            addManualClipFromSec(manualStartSec, manualEndSec);
+                          }}
+                          className="w-full md:w-auto bg-indigo-500 hover:bg-indigo-600 text-pure-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow shadow-indigo-500/15"
+                        >
+                          <Plus size={14} /> Add Clip Timeline
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-white/35 text-center py-2 font-mono">
+                      Loading timeline metadata sliders...
+                    </div>
+                  )}
+                </div>
+
+                {/* Right side: Added Clips List and Manual typing inputs (col-span 1) */}
+                <div className="lg:col-span-1 bg-surface-900/60 border border-white/5 p-4 rounded-2xl flex flex-col justify-between space-y-4">
+                  <div className="space-y-4">
+                    <p className="text-[11px] font-mono text-indigo-400 uppercase tracking-widest font-bold flex items-center justify-between border-b border-white/5 pb-2">
+                      <span>Clip List Manager</span>
+                      <span className="bg-indigo-500/10 px-2 py-0.5 rounded-full text-[10px]">
+                        {manualClips.length} added
+                      </span>
+                    </p>
+
+                    {/* Manual Cut Inputs (typed) */}
+                    <div className="space-y-3 bg-surface-800/40 p-3 rounded-xl border border-white/5">
+                      <p className="text-[10px] font-mono text-white/40 uppercase">Add Timestamp Manually</p>
+                      <div className="flex gap-2 items-end">
+                        <div className="flex-1 space-y-1">
+                          <label className="text-[9px] text-white/40 uppercase font-mono">Start (MM:SS)</label>
+                          <input
+                            value={manualStart}
+                            onChange={(e) => setManualStart(e.target.value)}
+                            placeholder="00:00"
+                            className="w-full bg-surface-900 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500/40 font-mono"
+                          />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <label className="text-[9px] text-white/40 uppercase font-mono">End (MM:SS)</label>
+                          <input
+                            value={manualEnd}
+                            onChange={(e) => setManualEnd(e.target.value)}
+                            placeholder="01:00"
+                            className="w-full bg-surface-900 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500/40 font-mono"
+                          />
+                        </div>
+                        <button
+                          onClick={addManualClip}
+                          className="bg-indigo-500 hover:bg-indigo-600 text-pure-white px-2.5 py-2.5 rounded-lg transition-all flex items-center justify-center"
+                          title="Add Custom Clip"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Added clips scrolling list */}
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-mono text-white/40 uppercase">Clips Added to Queue</p>
+                      {manualClips.length > 0 ? (
+                        <div className="space-y-1.5 max-h-[280px] overflow-y-auto scrollbar-premium pr-1">
+                          {manualClips.map((c, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center justify-between bg-surface-800/80 rounded-xl px-3 py-2 border border-white/5 hover:border-white/10 transition-all group"
+                            >
+                              <div className="flex flex-col">
+                                <span className="text-[11px] text-white/80 font-mono font-bold">
+                                  Clip #{i + 1}
+                                </span>
+                                <span className="text-[10px] text-white/40 font-mono mt-0.5">
+                                  {formatDuration(c.start)} ➔ {formatDuration(c.end)} ({c.end - c.start}s)
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => setManualClips((prev) => prev.filter((_, j) => j !== i))}
+                                className="text-white/20 hover:text-red-400 transition-colors p-1"
+                                title="Remove clip"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 border border-dashed border-white/5 rounded-xl text-xs text-white/20 font-mono">
+                          No clips added yet.<br />Use timeline or type above.
+                        </div>
                       )}
                     </div>
-                    <p className="text-[10px] text-white/25 font-mono">
-                      Klik timeline untuk pindah marker terdekat • Putar video lalu tekan 📍 untuk tandai
-                    </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Start Slider */}
-                    <div className="space-y-1 bg-surface-900/40 p-3 rounded-2xl border border-white/5">
-                      <div className="flex items-center justify-between text-xs font-mono mb-1">
-                        <span className="text-white/40">Start Marker</span>
-                        <span className="text-emerald-400 font-bold">{formatDuration(manualStartSec)}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={meta.duration}
-                        value={manualStartSec}
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          setManualStartSec(val);
-                          seekToTime(val);
-                          if (val >= manualEndSec) {
-                            setManualEndSec(Math.min(meta.duration, val + 1));
-                          }
-                        }}
-                        className="w-full accent-emerald-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none"
-                      />
-                      {/* Mark S button */}
+                  {/* Clear all action */}
+                  {manualClips.length > 0 && (
+                    <div className="flex justify-end pt-2 border-t border-white/5">
                       <button
-                        onClick={() => {
-                          const t = Math.floor(currentTime);
-                          setManualStartSec(t);
-                          if (t >= manualEndSec) setManualEndSec(Math.min(meta.duration, t + 1));
-                        }}
-                        className="mt-2 w-full text-[10px] bg-emerald-500/10 hover:bg-emerald-500/25 active:scale-95 text-emerald-400 border border-emerald-500/25 px-2 py-1 rounded-lg transition-all font-bold flex items-center justify-center gap-1"
-                        title={`Tandai waktu saat ini (${formatDuration(currentTime)}) sebagai Start`}
+                        onClick={() => setManualClips([])}
+                        className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors font-bold font-mono flex items-center gap-1"
                       >
-                        📍 Mark S &nbsp;<span className="text-emerald-300/60 font-normal">{formatDuration(currentTime)}</span>
+                        <Trash2 size={10} /> Clear all manual clips
                       </button>
                     </div>
-
-                    {/* End Slider */}
-                    <div className="space-y-1 bg-surface-900/40 p-3 rounded-2xl border border-white/5">
-                      <div className="flex items-center justify-between text-xs font-mono mb-1">
-                        <span className="text-white/40">End Marker</span>
-                        <span className="text-rose-400 font-bold">{formatDuration(manualEndSec)}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={meta.duration}
-                        value={manualEndSec}
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          setManualEndSec(val);
-                          seekToTime(val);
-                          if (val <= manualStartSec) {
-                            setManualStartSec(Math.max(0, val - 1));
-                          }
-                        }}
-                        className="w-full accent-rose-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none"
-                      />
-                      {/* Mark E button */}
-                      <button
-                        onClick={() => {
-                          const t = Math.floor(currentTime);
-                          setManualEndSec(t);
-                          if (t <= manualStartSec) setManualStartSec(Math.max(0, t - 1));
-                        }}
-                        className="mt-2 w-full text-[10px] bg-rose-500/10 hover:bg-rose-500/25 active:scale-95 text-rose-400 border border-rose-500/25 px-2 py-1 rounded-lg transition-all font-bold flex items-center justify-center gap-1"
-                        title={`Tandai waktu saat ini (${formatDuration(currentTime)}) sebagai End`}
-                      >
-                        📍 Mark E &nbsp;<span className="text-rose-300/60 font-normal">{formatDuration(currentTime)}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Selected Range details & add button */}
-                  <div className="bg-surface-900/60 border border-white/5 p-3 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div className="text-xs font-mono">
-                      <span className="text-white/40">Selected Clip:</span>{" "}
-                      <span className="text-white font-bold">{formatDuration(manualStartSec)}</span>{" "}
-                      ➔{" "}
-                      <span className="text-white font-bold">{formatDuration(manualEndSec)}</span>{" "}
-                      <span className="text-indigo-400 font-bold">({manualEndSec - manualStartSec} seconds)</span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        addManualClipFromSec(manualStartSec, manualEndSec);
-                      }}
-                      className="bg-indigo-500 hover:bg-indigo-600 text-pure-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow shadow-indigo-500/15"
-                    >
-                      <Plus size={14} /> Add Clip Timeline
-                    </button>
-                  </div>
+                  )}
                 </div>
-              ) : (
-                <div className="text-xs text-white/35 text-center py-2 font-mono">
-                  Loading timeline metadata sliders...
-                </div>
-              )}
+              </div>
             </div>
           )}
 
