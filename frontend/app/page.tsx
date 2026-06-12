@@ -1749,7 +1749,7 @@ export default function Home() {
                 </div>
 
                 {/* Right side: Added Clips List and Manual typing inputs (col-span 1) */}
-                <div className="lg:col-span-1 lg:sticky lg:top-6 self-start bg-surface-900/60 border border-white/5 p-4 rounded-2xl flex flex-col space-y-4">
+                <div className="lg:col-span-1 self-start bg-surface-900/60 border border-white/5 p-4 rounded-2xl flex flex-col space-y-4">
                   <div className="space-y-4">
                     <p className="text-[11px] font-mono text-indigo-400 uppercase tracking-widest font-bold flex items-center justify-between border-b border-white/5 pb-2">
                       <span>Clip List Manager</span>
