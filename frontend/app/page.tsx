@@ -591,7 +591,7 @@ export default function Home() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-500/5 blur-[120px] pointer-events-none z-0 animate-drift-2 gpu-accelerated" />
 
       {/* LEFT COLUMN: Sidebar Console */}
-      <aside className="w-full lg:w-[420px] xl:w-[460px] border-b lg:border-b-0 lg:border-r border-white/5 lg:h-screen lg:sticky lg:top-0 flex flex-col bg-surface-800/60 backdrop-blur-xl z-20 overflow-y-auto scrollbar-premium animate-fade-in-left gpu-accelerated">
+      <aside className="w-full lg:w-[420px] xl:w-[460px] border-b lg:border-b-0 lg:border-r border-white/5 lg:h-screen lg:sticky lg:top-0 flex flex-col bg-surface-800/60 backdrop-blur-xl z-20 overflow-y-auto scrollbar-premium animate-fade-in-left">
         {/* Branding header */}
         <div className="p-6 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3 group">
@@ -1321,7 +1321,7 @@ export default function Home() {
       </aside>
 
       {/* RIGHT COLUMN: Main Workspace */}
-      <main className="flex-1 min-h-screen flex flex-col bg-gradient-to-br from-surface-900 via-surface-900 to-indigo-950/15 overflow-y-auto animate-fade-in-right gpu-accelerated">
+      <main className="flex-1 min-h-screen flex flex-col bg-gradient-to-br from-surface-900 via-surface-900 to-indigo-950/15 overflow-y-auto animate-fade-in-right">
         {/* Workspace Top Bar */}
         <header className="px-6 lg:px-10 py-5 border-b border-white/5 flex items-center justify-between bg-surface-900/40 backdrop-blur-md">
           <div>
@@ -1749,7 +1749,7 @@ export default function Home() {
                 </div>
 
                 {/* Right side: Added Clips List and Manual typing inputs (col-span 1) */}
-                <div className="lg:col-span-1 bg-surface-900/60 border border-white/5 p-4 rounded-2xl flex flex-col justify-between space-y-4">
+                <div className="lg:col-span-1 lg:sticky lg:top-6 self-start bg-surface-900/60 border border-white/5 p-4 rounded-2xl flex flex-col space-y-4">
                   <div className="space-y-4">
                     <p className="text-[11px] font-mono text-indigo-400 uppercase tracking-widest font-bold flex items-center justify-between border-b border-white/5 pb-2">
                       <span>Clip List Manager</span>
