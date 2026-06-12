@@ -340,6 +340,11 @@ html {
     -webkit-backdrop-filter: none;
   }
 
+  /* Disable hover transform on mobile — causes scroll jank */
+  .glass-card:hover {
+    transform: none;
+  }
+
   /* Lighter sidebar background on mobile (no blur) */
   aside {
     backdrop-filter: none !important;
@@ -353,10 +358,6 @@ html {
   }
 }
 
-/* Ensure native momentum scrolling on touch devices */
-* {
-  -webkit-overflow-scrolling: touch;
-}
 
 @keyframes borderGlow {
   0% { background-position: 0% 50%; }
