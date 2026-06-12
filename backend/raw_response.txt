@@ -1,0 +1,288 @@
+{
+  "language": "en",
+  "full_text": "Oh. Every red light for a moment, I'm afraid. This red light that subtly shines on me. I don't know when it will explode. Woah. Under fear, I could be the one. The moment I close my eyes, it's eventually a fantasy. Is my heart broken? Or has time stopped? I just like it. Oh. The more I'm like this, the more. You bring me to my knees like this, my baby, here we are. We're about to blow it up and make a scene. Whenever I'm with you, the energy. I feel like it's about to explode. You are my time bomb. We are made to be okay. Cause I know it's right in the end. I feel like it's about to explode. You are my time bomb. I do this for the love, I'ma do 내 몸을 열어. So dizzy dizzy, 머리가 폭발할 것만 같아. I might might better stop right now. Woah woah woah. I just think you better take. 난 떨어져 또 찢으겠데. I can't go there. It's tick-tock, but my heart is ticking. I don't know if it'll explode when I press it. Oh. The more I'm like this, the more. You bring me to my knees like this, my baby, here we are. We're about to blow it up and make a scene. Whenever I'm with you, the energy. I feel like it's about to explode. You are my time bomb. We are made to be okay. Cause I know it's right in the end. I feel like it's about to explode. You are my time bomb. I'm ready to blow your mind. The time is now. I'm ready to blow your mind. You're my time bomb, time bomb, time bomb. I'm ready to blow your mind. The time is now. I'm ready to blow your mind. You're my time bomb, time bomb.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0.0,
+      "end": 0.54,
+      "text": "Oh."
+    },
+    {
+      "id": 1,
+      "start": 3.42,
+      "end": 15.93,
+      "text": "음악"
+    },
+    {
+      "id": 2,
+      "start": 17.07,
+      "end": 28.32,
+      "text": "Every red light for a moment, I'm afraid. This red light that subtly shines on me. I don't know when it will explode. Woah."
+    },
+    {
+      "id": 3,
+      "start": 28.32,
+      "end": 28.84,
+      "text": "음악"
+    },
+    {
+      "id": 4,
+      "start": 30.34,
+      "end": 32.54,
+      "text": "Under fear, I could be the one."
+    },
+    {
+      "id": 5,
+      "start": 32.74,
+      "end": 36.14,
+      "text": "The moment I close my eyes, it's eventually a fantasy."
+    },
+    {
+      "id": 6,
+      "start": 36.63,
+      "end": 42.66,
+      "text": "Is my heart broken? Or has time stopped? I just like it."
+    },
+    {
+      "id": 7,
+      "start": 43.19,
+      "end": 45.42,
+      "text": "Oh."
+    },
+    {
+      "id": 8,
+      "start": 45.42,
+      "end": 48.27,
+      "text": "The more I'm like this, the more."
+    },
+    {
+      "id": 9,
+      "start": 48.65,
+      "end": 54.34,
+      "text": "You bring me to my knees like this, my baby, here we are."
+    },
+    {
+      "id": 10,
+      "start": 54.34,
+      "end": 56.59,
+      "text": "음악"
+    },
+    {
+      "id": 11,
+      "start": 56.66,
+      "end": 58.64,
+      "text": "We're about to blow it up and make a scene."
+    },
+    {
+      "id": 12,
+      "start": 58.74,
+      "end": 102.73,
+      "text": "Whenever I'm with you, the energy."
+    },
+    {
+      "id": 13,
+      "start": 103.1,
+      "end": 108.97,
+      "text": "I feel like it's about to explode. You are my time bomb."
+    },
+    {
+      "id": 14,
+      "start": 109.43,
+      "end": 112.59,
+      "text": "We are made to be okay."
+    },
+    {
+      "id": 15,
+      "start": 112.59,
+      "end": 115.54,
+      "text": "Cause I know it's right in the end."
+    },
+    {
+      "id": 16,
+      "start": 115.93,
+      "end": 121.78,
+      "text": "I feel like it's about to explode. You are my time bomb."
+    },
+    {
+      "id": 17,
+      "start": 121.78,
+      "end": 123.01,
+      "text": "음악"
+    },
+    {
+      "id": 18,
+      "start": 123.01,
+      "end": 125.68,
+      "text": "I do this for the love, I'ma do 내 몸을 열어."
+    },
+    {
+      "id": 19,
+      "start": 126.24,
+      "end": 129.35,
+      "text": "So dizzy dizzy, 머리가 폭발할 것만 같아."
+    },
+    {
+      "id": 20,
+      "start": 129.83,
+      "end": 133.25,
+      "text": "I might might better stop right now."
+    },
+    {
+      "id": 21,
+      "start": 133.56,
+      "end": 135.88,
+      "text": "Woah woah woah."
+    },
+    {
+      "id": 22,
+      "start": 136.03,
+      "end": 138.86,
+      "text": "I just think you better take."
+    },
+    {
+      "id": 23,
+      "start": 139.38,
+      "end": 141.97,
+      "text": "난 떨어져 또 찢으겠데."
+    },
+    {
+      "id": 24,
+      "start": 142.06,
+      "end": 142.69,
+      "text": "I can't go there."
+    },
+    {
+      "id": 25,
+      "start": 142.69,
+      "end": 145.41,
+      "text": "It's tick-tock, but my heart is ticking."
+    },
+    {
+      "id": 26,
+      "start": 145.7,
+      "end": 148.69,
+      "text": "I don't know if it'll explode when I press it."
+    },
+    {
+      "id": 27,
+      "start": 149.03,
+      "end": 151.05,
+      "text": "Oh."
+    },
+    {
+      "id": 28,
+      "start": 151.05,
+      "end": 153.86,
+      "text": "The more I'm like this, the more."
+    },
+    {
+      "id": 29,
+      "start": 154.24,
+      "end": 159.98,
+      "text": "You bring me to my knees like this, my baby, here we are."
+    },
+    {
+      "id": 30,
+      "start": 159.98,
+      "end": 202.13,
+      "text": "음악"
+    },
+    {
+      "id": 31,
+      "start": 202.13,
+      "end": 204.42,
+      "text": "We're about to blow it up and make a scene."
+    },
+    {
+      "id": 32,
+      "start": 204.57,
+      "end": 207.69,
+      "text": "Whenever I'm with you, the energy."
+    },
+    {
+      "id": 33,
+      "start": 208.2,
+      "end": 213.78,
+      "text": "I feel like it's about to explode. You are my time bomb."
+    },
+    {
+      "id": 34,
+      "start": 215.11,
+      "end": 217.43,
+      "text": "We are made to be okay."
+    },
+    {
+      "id": 35,
+      "start": 217.43,
+      "end": 220.64,
+      "text": "Cause I know it's right in the end."
+    },
+    {
+      "id": 36,
+      "start": 220.93,
+      "end": 226.79,
+      "text": "I feel like it's about to explode. You are my time bomb."
+    },
+    {
+      "id": 37,
+      "start": 227.35,
+      "end": 229.47,
+      "text": "I'm ready to blow your mind."
+    },
+    {
+      "id": 38,
+      "start": 231.62,
+      "end": 233.72,
+      "text": "The time is now."
+    },
+    {
+      "id": 39,
+      "start": 234.33,
+      "end": 236.72,
+      "text": "I'm ready to blow your mind."
+    },
+    {
+      "id": 40,
+      "start": 237.58,
+      "end": 240.75,
+      "text": "You're my time bomb, time bomb, time bomb."
+    },
+    {
+      "id": 41,
+      "start": 241.24,
+      "end": 243.68,
+      "text": "I'm ready to blow your mind."
+    },
+    {
+      "id": 42,
+      "start": 244.59,
+      "end": 246.78,
+      "text": "The time is now."
+    },
+    {
+      "id": 43,
+      "start": 247.34,
+      "end": 249.77,
+      "text": "I'm ready to blow your mind."
+    },
+    {
+      "id": 44,
+      "start": 250.53,
+      "end": 253.28,
+      "text": "You're my time bomb, time bomb."
+    },
+    {
+      "id": 45,
+      "start": 253.28,
+      "end": 254.12,
+      "text": "음악"
+    },
+    {
+      "id": 46,
+      "start": 300.56,
+      "end": 314.54,
+      "text": "음악"
+    }
+  ]
+}
