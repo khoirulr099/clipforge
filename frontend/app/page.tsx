@@ -1646,6 +1646,53 @@ export default function Home() {
                         </p>
                       </div>
 
+                      {/* Draggable Sliders for Start & End */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1 bg-surface-900/40 p-2.5 rounded-xl border border-white/5">
+                          <div className="flex items-center justify-between text-[11px] font-mono">
+                            <span className="text-white/40 font-semibold uppercase tracking-wider text-[9px]">Start Marker</span>
+                            <span className="text-emerald-400 font-bold">{formatDuration(manualStartSec)}</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={meta.duration}
+                            value={manualStartSec}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setManualStartSec(val);
+                              seekToTime(val);
+                              if (val >= manualEndSec) {
+                                setManualEndSec(Math.min(meta.duration, val + 1));
+                              }
+                            }}
+                            className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-white/10 rounded-lg appearance-none"
+                          />
+                        </div>
+
+                        <div className="space-y-1 bg-surface-900/40 p-2.5 rounded-xl border border-white/5">
+                          <div className="flex items-center justify-between text-[11px] font-mono">
+                            <span className="text-white/40 font-semibold uppercase tracking-wider text-[9px]">End Marker</span>
+                            <span className="text-rose-400 font-bold">{formatDuration(manualEndSec)}</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={meta.duration}
+                            value={manualEndSec}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setManualEndSec(val);
+                              seekToTime(val);
+                              if (val <= manualStartSec) {
+                                setManualStartSec(Math.max(0, val - 1));
+                              }
+                            }}
+                            className="w-full accent-rose-500 cursor-pointer h-1.5 bg-white/10 rounded-lg appearance-none"
+                          />
+                        </div>
+                      </div>
+
                       {/* Inline Compact Action Row */}
                       <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-surface-900/60 border border-white/5 p-3 rounded-2xl animate-scale-up">
                         <div className="flex gap-2 w-full md:w-auto">
