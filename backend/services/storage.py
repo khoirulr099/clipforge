@@ -46,7 +46,7 @@ def upload_clip(local_path: str, job_id: str, clip_index: int) -> str:
     shutil.copy2(local_path, dest_path)
     
     # Return local URL served by FastAPI
-    return f"http://localhost:8000/static/clips/{job_id}/{safe_filename}"
+    return f"{settings.BACKEND_BASE_URL}/static/clips/{job_id}/{safe_filename}"
 
 
 def upload_srt(srt_content: str, job_id: str, clip_index: int) -> str:
@@ -80,7 +80,7 @@ def upload_srt(srt_content: str, job_id: str, clip_index: int) -> str:
     with open(dest_path, "w", encoding="utf-8") as f:
         f.write(srt_content)
         
-    return f"http://localhost:8000/static/subtitles/{job_id}/{safe_filename}"
+    return f"{settings.BACKEND_BASE_URL}/static/subtitles/{job_id}/{safe_filename}"
 
 
 def delete_job_files(job_id: str):

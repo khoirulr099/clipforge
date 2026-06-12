@@ -79,9 +79,13 @@ pip install -r requirements.txt
 # Copy env config
 cp .env.example .env
 ```
-Open `.env` and fill in your API keys:
+Open `.env` and configure the settings:
 ```env
+# Optional: If left empty, users must provide their own keys in the frontend
 GEMINI_API_KEY=AIzaSy...
+
+# Optional: Set this on the VPS so video download links point to the VPS IP instead of localhost
+BACKEND_BASE_URL=http://your-vps-ip:8000
 ```
 
 #### 2. Frontend Configuration
@@ -194,9 +198,13 @@ source venv/bin/activate
 pip install -r requirements.txt
 copy .env.example .env
 ```
-Buka `.env` dan isi API Key Anda:
+Buka `.env` dan atur konfigurasinya:
 ```env
+# Opsional: Jika dikosongkan, pengguna wajib mengisi API Key mereka di frontend
 GEMINI_API_KEY=AIzaSy...
+
+# Opsional: Atur ini di VPS agar tautan video hasil generate mengarah ke IP VPS (bukan localhost)
+BACKEND_BASE_URL=http://ip-vps-anda:8000
 ```
 
 #### 2. Konfigurasi Frontend (Next.js)

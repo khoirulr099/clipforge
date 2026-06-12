@@ -15,6 +15,7 @@ class Settings:
     SUPABASE_BUCKET: str = os.getenv("SUPABASE_BUCKET", "clipforge-videos")
     WHISPER_MODEL: str = os.getenv("WHISPER_MODEL", "base")
     TEMP_DIR: str = os.getenv("TEMP_DIR", "/tmp/clipforge")
+    BACKEND_BASE_URL: str = os.getenv("BACKEND_BASE_URL", "http://localhost:8000")
 
 
 settings = Settings()
