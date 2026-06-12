@@ -587,11 +587,11 @@ export default function Home() {
   return (
     <div className={`theme-${theme} relative flex flex-col lg:flex-row min-h-screen bg-surface-900 text-white selection:bg-indigo-500/30 selection:text-white transition-colors duration-500 overflow-x-hidden bg-tech-grid`}>
       {/* Dynamic drifting background glow blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none z-0" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-500/5 blur-[120px] pointer-events-none z-0" />
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[60px] lg:blur-[120px] pointer-events-none z-0" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-500/5 blur-[60px] lg:blur-[120px] pointer-events-none z-0" />
 
       {/* LEFT COLUMN: Sidebar Console */}
-      <aside className="w-full lg:w-[420px] xl:w-[460px] border-b lg:border-b-0 lg:border-r border-white/5 lg:h-screen lg:sticky lg:top-0 flex flex-col bg-surface-800/60 backdrop-blur-xl z-20 overflow-y-auto scrollbar-premium animate-fade-in-left">
+      <aside className="w-full lg:w-[420px] xl:w-[460px] border-b lg:border-b-0 lg:border-r border-white/5 lg:h-screen lg:sticky lg:top-0 flex flex-col bg-surface-800/60 lg:backdrop-blur-xl z-20 overflow-y-auto overscroll-y-contain scrollbar-premium animate-fade-in-left">
         {/* Branding header */}
         <div className="p-6 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3 group">
@@ -1321,9 +1321,9 @@ export default function Home() {
       </aside>
 
       {/* RIGHT COLUMN: Main Workspace */}
-      <main className="flex-1 min-h-screen flex flex-col bg-gradient-to-br from-surface-900 via-surface-900 to-indigo-950/15 overflow-y-auto animate-fade-in-right">
+      <main className="flex-1 min-h-screen flex flex-col bg-gradient-to-br from-surface-900 via-surface-900 to-indigo-950/15 overflow-y-auto overscroll-y-contain animate-fade-in-right">
         {/* Workspace Top Bar */}
-        <header className="px-6 lg:px-10 py-5 border-b border-white/5 flex items-center justify-between bg-surface-900/40 backdrop-blur-md">
+        <header className="px-6 lg:px-10 py-5 border-b border-white/5 flex items-center justify-between bg-surface-900/40 lg:backdrop-blur-md">
           <div>
             <h1 className="font-heading text-lg font-bold text-white tracking-wide">Workspace Console</h1>
             <p className="text-xs text-white/40 mt-0.5 font-mono">Process monitors and generated video libraries</p>
