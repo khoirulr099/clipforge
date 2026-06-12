@@ -11,31 +11,14 @@ import {
 import {
   fetchMetadata, startProcess, getStatus,
   formatDuration, mmssToSec, STATUS_LABELS,
+  API,
   type VideoMeta, type JobStatus, type Clip,
   type Mode, type Provider, type Quality, type Format, type ManualClip,
 } from "./lib/api";
 
 const POLL_INTERVAL = 2500;
 
-interface ApiProfile {
-  id: string;
-  name: string;
-  geminiApiKey: string;
-  openaiApiKey: string;
-  openaiBaseUrl: string;
-  openaiChatModel: string;
-}
-
-const DEFAULT_PROFILES: ApiProfile[] = [
-  {
-    id: "default",
-    name: "Default Local (.env)",
-    geminiApiKey: "",
-    openaiApiKey: "",
-    openaiBaseUrl: "",
-    openaiChatModel: "",
-  }
-];
+// Profiles removed to simplify direct API Key settings
 
 function getYouTubeId(url: string): string | null {
   try {
@@ -125,6 +108,13 @@ export default function Home() {
   const [outputPrefix, setOutputPrefix] = useState("");
   const [useVariation, setUseVariation] = useState(false);
 
+  // ── New Video Customization States ──
+  const [subtitlePosition, setSubtitlePosition] = useState<string>("bottom");
+  const [audioFade, setAudioFade] = useState<boolean>(false);
+  const [addWatermark, setAddWatermark] = useState<boolean>(false);
+  const [watermarkText, setWatermarkText] = useState<string>("");
+  const [splitScreen, setSplitScreen] = useState<boolean>(false);
+
   // ── Manual clips ──
   const [manualClips, setManualClips] = useState<ManualClip[]>([]);
   const [manualStart, setManualStart] = useState("00:00");
@@ -146,11 +136,17 @@ export default function Home() {
   const [theme, setTheme] = useState<string>("dark");
   const [infoOpen, setInfoOpen] = useState(false);
 
-  // ── Profiles state ──
-  const [profiles, setProfiles] = useState<ApiProfile[]>([]);
-  const [selectedProfileId, setSelectedProfileId] = useState<string>("default");
+  // ── API Keys States ──
+  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [openaiApiKey, setOpenaiApiKey] = useState("");
+  const [openaiBaseUrl, setOpenaiBaseUrl] = useState("");
+  const [openaiChatModel, setOpenaiChatModel] = useState("");
+
   const [profilesOpen, setProfilesOpen] = useState(false);
-  const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [showOpenaiKey, setShowOpenaiKey] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
 
 
@@ -162,21 +158,11 @@ export default function Home() {
       setTheme(savedTheme);
     }
     
-    // 2. Profiles
-    const savedProfiles = localStorage.getItem("clipforge_profiles");
-    const savedSelectedProfile = localStorage.getItem("clipforge_selected_profile_id");
-    if (savedProfiles) {
-      try {
-        setProfiles(JSON.parse(savedProfiles));
-      } catch {
-        setProfiles(DEFAULT_PROFILES);
-      }
-    } else {
-      setProfiles(DEFAULT_PROFILES);
-    }
-    if (savedSelectedProfile) {
-      setSelectedProfileId(savedSelectedProfile);
-    }
+    // 2. API Keys
+    setGeminiApiKey(localStorage.getItem("clipforge_gemini_api_key") || "");
+    setOpenaiApiKey(localStorage.getItem("clipforge_openai_api_key") || "");
+    setOpenaiBaseUrl(localStorage.getItem("clipforge_openai_base_url") || "");
+    setOpenaiChatModel(localStorage.getItem("clipforge_openai_chat_model") || "");
 
     // 3. History
     const savedHistory = localStorage.getItem("clipforge_history");
@@ -206,6 +192,22 @@ export default function Home() {
       }
     }
 
+    // Load customization settings
+    const savedFormat = localStorage.getItem("clipforge_format");
+    if (savedFormat) setFormat(savedFormat as Format);
+    const savedSubtitleStyle = localStorage.getItem("clipforge_subtitle_style");
+    if (savedSubtitleStyle) setSubtitleStyle(savedSubtitleStyle);
+    const savedSubtitlePosition = localStorage.getItem("clipforge_subtitle_position");
+    if (savedSubtitlePosition) setSubtitlePosition(savedSubtitlePosition);
+    const savedAudioFade = localStorage.getItem("clipforge_audio_fade");
+    if (savedAudioFade) setAudioFade(savedAudioFade === "true");
+    const savedAddWatermark = localStorage.getItem("clipforge_add_watermark");
+    if (savedAddWatermark) setAddWatermark(savedAddWatermark === "true");
+    const savedWatermarkText = localStorage.getItem("clipforge_watermark_text");
+    if (savedWatermarkText) setWatermarkText(savedWatermarkText);
+    const savedSplitScreen = localStorage.getItem("clipforge_split_screen");
+    if (savedSplitScreen) setSplitScreen(savedSplitScreen === "true");
+
     // Set mounted to true after all initial state is loaded
     setMounted(true);
   }, []);
@@ -217,20 +219,7 @@ export default function Home() {
     }
   }, [theme, mounted]);
 
-  // Save profiles & selected ID
-  useEffect(() => {
-    if (mounted && profiles.length > 0) {
-      localStorage.setItem("clipforge_profiles", JSON.stringify(profiles));
-    }
-  }, [profiles, mounted]);
-
-  useEffect(() => {
-    if (mounted) {
-      localStorage.setItem("clipforge_selected_profile_id", selectedProfileId);
-    }
-  }, [selectedProfileId, mounted]);
-
-  const activeProfile = profiles.find((p) => p.id === selectedProfileId) || DEFAULT_PROFILES[0];
+  // Save profiles & selected ID removed (using direct inputs saved on button click)
 
   // Save history to localStorage
   useEffect(() => {
@@ -252,6 +241,49 @@ export default function Home() {
       localStorage.setItem("clipforge_url", url);
     }
   }, [url, mounted]);
+
+  // Save customization options
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("clipforge_format", format);
+    }
+  }, [format, mounted]);
+
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("clipforge_subtitle_style", subtitleStyle);
+    }
+  }, [subtitleStyle, mounted]);
+
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("clipforge_subtitle_position", subtitlePosition);
+    }
+  }, [subtitlePosition, mounted]);
+
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("clipforge_audio_fade", audioFade.toString());
+    }
+  }, [audioFade, mounted]);
+
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("clipforge_add_watermark", addWatermark.toString());
+    }
+  }, [addWatermark, mounted]);
+
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("clipforge_watermark_text", watermarkText);
+    }
+  }, [watermarkText, mounted]);
+
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("clipforge_split_screen", splitScreen.toString());
+    }
+  }, [splitScreen, mounted]);
 
   // Save meta and url cache to localStorage
   useEffect(() => {
@@ -325,7 +357,7 @@ export default function Home() {
 
   const handleDeleteClip = async (jId: string, clipIndex: number, clipUrl: string, srtUrl: string) => {
     try {
-      await fetch("http://localhost:8000/api/video/delete-clip", {
+      await fetch(`${API}/api/video/delete-clip`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -351,7 +383,7 @@ export default function Home() {
 
   const handleDeleteJob = async (jId: string) => {
     try {
-      await fetch("http://localhost:8000/api/video/delete-job", {
+      await fetch(`${API}/api/video/delete-job`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ job_id: jId }),
@@ -363,14 +395,13 @@ export default function Home() {
   };
 
   const handleClearAllHistory = async () => {
-    const confirmClear = window.confirm("Are you sure you want to delete all generated videos and files from disk?");
-    if (!confirmClear) return;
     try {
-      await fetch("http://localhost:8000/api/video/cleanup", { method: "POST" });
+      await fetch(`${API}/api/video/cleanup`, { method: "POST" });
     } catch (e) {
       console.error("Failed to run cleanup:", e);
     }
     setHistory([]);
+    setShowClearConfirm(false);
   };
 
   const handleProcess = async () => {
@@ -390,11 +421,15 @@ export default function Home() {
         output_prefix: outputPrefix.trim() || "clip",
         use_variation: useVariation,
         manual_clips: mode === "manual" ? manualClips : undefined,
-        gemini_api_key: activeProfile.geminiApiKey || undefined,
-        openai_api_key: activeProfile.openaiApiKey || undefined,
-        openai_base_url: activeProfile.openaiBaseUrl || undefined,
-        openai_chat_model: activeProfile.openaiChatModel || undefined,
+        gemini_api_key: geminiApiKey.trim() || undefined,
+        openai_api_key: openaiApiKey.trim() || undefined,
+        openai_base_url: openaiBaseUrl.trim() || undefined,
+        openai_chat_model: openaiChatModel.trim() || undefined,
         subtitle_style: subtitleStyle,
+        audio_fade: audioFade,
+        watermark_text: addWatermark ? watermarkText : "",
+        subtitle_position: subtitleStyle !== "none" ? subtitlePosition : "bottom",
+        split_screen: splitScreen,
       });
       setJobId(job_id);
       setJob({ status: "queued", progress: 0, clips: [] });
@@ -429,9 +464,13 @@ export default function Home() {
   const canProcess = url && (mode !== "manual" || manualClips.length > 0);
 
   return (
-    <div className={`theme-${theme} flex flex-col lg:flex-row min-h-screen bg-surface-900 text-white selection:bg-indigo-500/30 selection:text-white transition-colors duration-500`}>
+    <div className={`theme-${theme} relative flex flex-col lg:flex-row min-h-screen bg-surface-900 text-white selection:bg-indigo-500/30 selection:text-white transition-colors duration-500 overflow-x-hidden bg-tech-grid`}>
+      {/* Dynamic drifting background glow blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none z-0 animate-drift-1 gpu-accelerated" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-500/5 blur-[120px] pointer-events-none z-0 animate-drift-2 gpu-accelerated" />
+
       {/* LEFT COLUMN: Sidebar Console */}
-      <aside className="w-full lg:w-[420px] xl:w-[460px] border-b lg:border-b-0 lg:border-r border-white/5 lg:h-screen lg:sticky lg:top-0 flex flex-col bg-surface-800/60 backdrop-blur-xl z-20 overflow-y-auto scrollbar-premium">
+      <aside className="w-full lg:w-[420px] xl:w-[460px] border-b lg:border-b-0 lg:border-r border-white/5 lg:h-screen lg:sticky lg:top-0 flex flex-col bg-surface-800/60 backdrop-blur-xl z-20 overflow-y-auto scrollbar-premium animate-fade-in-left gpu-accelerated">
         {/* Branding header */}
         <div className="p-6 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3 group">
@@ -536,7 +575,7 @@ export default function Home() {
             )}
           </div>
 
-          {/* Section 2: API Keys Profiles */}
+          {/* Section 2: API Key Settings */}
           <div className="glass rounded-xl border border-white/5 overflow-hidden">
             <button
               onClick={() => setProfilesOpen(!profilesOpen)}
@@ -544,177 +583,128 @@ export default function Home() {
             >
               <div className="flex items-center gap-2">
                 <Key size={14} className="text-indigo-400" />
-                <span className="text-xs font-semibold text-white/80">API Profiles Settings</span>
-                <span className="text-[10px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/10">
-                  {activeProfile.name}
-                </span>
+                <span className="text-xs font-semibold text-white/80">API Key Settings</span>
+                {(geminiApiKey || openaiApiKey) ? (
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/10">
+                    Custom Keys Active
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
+                    Default (.env)
+                  </span>
+                )}
               </div>
               <ChevronDown size={14} className={`text-white/40 transition-transform duration-300 ${profilesOpen ? "rotate-180" : ""}`} />
             </button>
 
             {profilesOpen && (
               <div className="px-4 pb-4 border-t border-white/5 pt-3 space-y-3 bg-surface-900/30">
-                <div className="flex gap-2 items-end">
-                  <div className="flex-1 space-y-1">
-                    <label className="text-[9px] font-mono text-white/30 uppercase tracking-wider">Active Profile</label>
-                    <select
-                      value={selectedProfileId}
-                      onChange={(e) => setSelectedProfileId(e.target.value)}
-                      className="w-full bg-surface-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
-                    >
-                      {profiles.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const name = prompt("Enter new profile name:", `Profile ${profiles.length + 1}`);
-                      if (!name) return;
-                      const newProfile: ApiProfile = {
-                        id: Math.random().toString(36).substr(2, 9),
-                        name,
-                        geminiApiKey: "",
-                        openaiApiKey: "",
-                        openaiBaseUrl: "",
-                        openaiChatModel: "",
-                      };
-                      setProfiles((prev) => [...prev, newProfile]);
-                      setSelectedProfileId(newProfile.id);
-                    }}
-                    className="bg-indigo-500 hover:bg-indigo-600 text-pure-white px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 h-[30px]"
-                    title="Create New Profile"
-                  >
-                    <Plus size={12} /> New
-                  </button>
-                  {selectedProfileId !== "default" && (
-                    <button
-                      onClick={() => {
-                        const confirmDel = window.confirm("Are you sure you want to delete this profile?");
-                        if (!confirmDel) return;
-                        setProfiles((prev) => prev.filter((p) => p.id !== selectedProfileId));
-                        setSelectedProfileId("default");
-                      }}
-                      className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-2.5 py-1.5 rounded-lg text-xs border border-red-500/20 transition-all h-[30px] flex items-center justify-center"
-                      title="Delete Profile"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  )}
+                {/* 🔒 Security Notice Banner for User Trust */}
+                <div className="flex items-start gap-2 text-[10px] text-indigo-300 bg-indigo-500/10 p-2.5 rounded-lg border border-indigo-500/20 leading-normal font-sans">
+                  <CheckCircle size={12} className="flex-shrink-0 mt-0.5 text-indigo-400" />
+                  <span><strong>Security Guarantee:</strong> Your API keys are saved locally in your own browser's secure cache (localStorage). They never pass through our servers and are sent directly to the official AI provider endpoints.</span>
                 </div>
 
-                {selectedProfileId !== "default" && (
-                  <div className="space-y-2.5 border border-white/5 rounded-lg p-3 bg-black/10">
+                <div className="space-y-2.5 border border-white/5 rounded-lg p-3 bg-black/10">
+                  <div className="space-y-2">
                     <div className="space-y-1">
-                      <label className="text-[9px] font-mono text-white/30 uppercase">Profile Name</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[9px] font-mono text-white/30 uppercase">Gemini API Key</label>
+                        <button
+                          type="button"
+                          onClick={() => setShowGeminiKey(!showGeminiKey)}
+                          className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
+                        >
+                          {showGeminiKey ? <EyeOff size={10} /> : <Eye size={10} />}
+                          {showGeminiKey ? "Hide" : "Show"}
+                        </button>
+                      </div>
                       <input
-                        type="text"
-                        value={activeProfile.name}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setProfiles((prev) =>
-                            prev.map((p) => (p.id === selectedProfileId ? { ...p, name: val } : p))
-                          );
-                        }}
-                        className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                        type={showGeminiKey ? "text" : "password"}
+                        value={geminiApiKey}
+                        onChange={(e) => setGeminiApiKey(e.target.value)}
+                        placeholder="AIzaSy..."
+                        className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
                       />
+                      <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For Google Gemini models & free-tier audio transcription.</p>
                     </div>
 
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <label className="text-[9px] font-mono text-white/30 uppercase">Gemini API Key</label>
-                          <button
-                            type="button"
-                            onClick={() => setShowApiKey(prev => ({ ...prev, [selectedProfileId + "_gemini"]: !prev[selectedProfileId + "_gemini"] }))}
-                            className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
-                          >
-                            {showApiKey[selectedProfileId + "_gemini"] ? <EyeOff size={10} /> : <Eye size={10} />}
-                            {showApiKey[selectedProfileId + "_gemini"] ? "Hide" : "Show"}
-                          </button>
-                        </div>
-                        <input
-                          type={showApiKey[selectedProfileId + "_gemini"] ? "text" : "password"}
-                          value={activeProfile.geminiApiKey}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setProfiles((prev) =>
-                              prev.map((p) => (p.id === selectedProfileId ? { ...p, geminiApiKey: val } : p))
-                            );
-                          }}
-                          placeholder="AIzaSy..."
-                          className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
-                        />
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[9px] font-mono text-white/30 uppercase">OpenAI API Key</label>
+                        <button
+                          type="button"
+                          onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                          className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
+                        >
+                          {showOpenaiKey ? <EyeOff size={10} /> : <Eye size={10} />}
+                          {showOpenaiKey ? "Hide" : "Show"}
+                        </button>
                       </div>
-
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <label className="text-[9px] font-mono text-white/30 uppercase">OpenAI API Key</label>
-                          <button
-                            type="button"
-                            onClick={() => setShowApiKey(prev => ({ ...prev, [selectedProfileId + "_openai"]: !prev[selectedProfileId + "_openai"] }))}
-                            className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
-                          >
-                            {showApiKey[selectedProfileId + "_openai"] ? <EyeOff size={10} /> : <Eye size={10} />}
-                            {showApiKey[selectedProfileId + "_openai"] ? "Hide" : "Show"}
-                          </button>
-                        </div>
-                        <input
-                          type={showApiKey[selectedProfileId + "_openai"] ? "text" : "password"}
-                          value={activeProfile.openaiApiKey}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setProfiles((prev) =>
-                              prev.map((p) => (p.id === selectedProfileId ? { ...p, openaiApiKey: val } : p))
-                            );
-                          }}
-                          placeholder="sk-..."
-                          className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-mono text-white/30 uppercase">Base URL</label>
-                        <input
-                          type="text"
-                          value={activeProfile.openaiBaseUrl}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setProfiles((prev) =>
-                              prev.map((p) => (p.id === selectedProfileId ? { ...p, openaiBaseUrl: val } : p))
-                            );
-                          }}
-                          placeholder="https://api.openai.com/v1"
-                          className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-mono text-white/30 uppercase">Model</label>
-                        <input
-                          type="text"
-                          value={activeProfile.openaiChatModel}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setProfiles((prev) =>
-                              prev.map((p) => (p.id === selectedProfileId ? { ...p, openaiChatModel: val } : p))
-                            );
-                          }}
-                          placeholder="gpt-4o"
-                          className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
-                        />
-                      </div>
+                      <input
+                        type={showOpenaiKey ? "text" : "password"}
+                        value={openaiApiKey}
+                        onChange={(e) => setOpenaiApiKey(e.target.value)}
+                        placeholder="sk-..."
+                        className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
+                      />
+                      <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For OpenAI Whisper transcription & GPT moments analysis.</p>
                     </div>
                   </div>
-                )}
 
-                {selectedProfileId === "default" && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-mono text-white/30 uppercase">Base URL</label>
+                      <input
+                        type="text"
+                        value={openaiBaseUrl}
+                        onChange={(e) => setOpenaiBaseUrl(e.target.value)}
+                        placeholder="https://api.openai.com/v1"
+                        className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                      />
+                      <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Use custom endpoints (e.g. dinoiki, DeepSeek, OpenRouter) to save quota.</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-mono text-white/30 uppercase">Model</label>
+                      <input
+                        type="text"
+                        value={openaiChatModel}
+                        onChange={(e) => setOpenaiChatModel(e.target.value)}
+                        placeholder="gpt-4o"
+                        className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                      />
+                      <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Model name for moments analysis.</p>
+                    </div>
+                  </div>
+
+                  {/* Save button for user assurance and feedback */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.setItem("clipforge_gemini_api_key", geminiApiKey.trim());
+                      localStorage.setItem("clipforge_openai_api_key", openaiApiKey.trim());
+                      localStorage.setItem("clipforge_openai_base_url", openaiBaseUrl.trim());
+                      localStorage.setItem("clipforge_openai_chat_model", openaiChatModel.trim());
+                      setSaveSuccess(true);
+                      setTimeout(() => {
+                        setSaveSuccess(false);
+                        setProfilesOpen(false); // Close setting panel to indicate success
+                      }, 1000);
+                    }}
+                    className="w-full bg-indigo-500 hover:bg-indigo-600 text-pure-white py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow shadow-indigo-500/10 mt-3"
+                  >
+                    {saveSuccess ? (
+                      <>✓ Saved Successfully!</>
+                    ) : (
+                      <>💾 Save API Key Settings</>
+                    )}
+                  </button>
+                </div>
+
+                {(!geminiApiKey && !openaiApiKey) && (
                   <p className="text-[10px] text-white/35 leading-relaxed italic bg-black/15 p-2.5 rounded-lg border border-white/5">
-                    💡 This profile uses the API keys configured in the backend `.env` file of your project. If you wish to enter keys manually in the web browser, click the &quot;+ New&quot; button above to create a custom profile.
+                    💡 No keys entered: The web app is currently using the default API keys configured in the backend `.env` file. Fill in these fields to override them.
                   </p>
                 )}
               </div>
@@ -883,7 +873,7 @@ export default function Home() {
             <div className="space-y-1">
               <label className="text-[10px] font-mono text-white/40 uppercase">Format</label>
               <div className="flex gap-1 bg-surface-900 rounded-lg p-0.5 border border-white/10">
-                {(["reels", "landscape"] as Format[]).map((f) => (
+                {(["reels", "landscape", "square"] as Format[]).map((f) => (
                   <button
                     key={f}
                     onClick={() => setFormat(f)}
@@ -891,7 +881,7 @@ export default function Home() {
                       format === f ? "bg-indigo-500 text-pure-white shadow-sm" : "text-white/40 hover:text-white/60"
                     }`}
                   >
-                    {f === "reels" ? "9:16" : "16:9"}
+                    {f === "reels" ? "9:16" : f === "landscape" ? "16:9" : "1:1"}
                   </button>
                 ))}
               </div>
@@ -933,6 +923,22 @@ export default function Home() {
             </select>
           </div>
 
+          {/* Subtitle Position Selector */}
+          {subtitleStyle !== "none" && (
+            <div className="space-y-1 transition-all duration-300">
+              <label className="text-[10px] font-mono text-white/40 uppercase">Subtitle Position</label>
+              <select
+                value={subtitlePosition}
+                onChange={(e) => setSubtitlePosition(e.target.value)}
+                className="w-full bg-surface-900 border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-semibold cursor-pointer"
+              >
+                <option value="bottom">⬇️ Bottom (Default)</option>
+                <option value="center">↕️ Center / Middle</option>
+                <option value="top">⬆️ Top</option>
+              </select>
+            </div>
+          )}
+
           {/* Prefix + Toggles */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -949,10 +955,38 @@ export default function Home() {
                 <input
                   type="checkbox"
                   checked={autoTracking}
-                  onChange={(e) => setAutoTracking(e.target.checked)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setAutoTracking(checked);
+                    if (checked) setSplitScreen(false);
+                  }}
                   className="accent-indigo-500 w-3.5 h-3.5 rounded border-white/10"
                 />
                 <span className="text-[11px] text-white/60 hover:text-white/80 transition-colors">🎯 Auto Tracking</span>
+              </label>
+              {format === "reels" && (
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={splitScreen}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setSplitScreen(checked);
+                      if (checked) setAutoTracking(false);
+                    }}
+                    className="accent-indigo-500 w-3.5 h-3.5 rounded border-white/10"
+                  />
+                  <span className="text-[11px] text-white/60 hover:text-white/80 transition-colors">🎙️ Podcast Duo Split</span>
+                </label>
+              )}
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={audioFade}
+                  onChange={(e) => setAudioFade(e.target.checked)}
+                  className="accent-indigo-500 w-3.5 h-3.5 rounded border-white/10"
+                />
+                <span className="text-[11px] text-white/60 hover:text-white/80 transition-colors">🔊 Audio Fade (1s)</span>
               </label>
               {mode === "ai" && (
                 <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -968,6 +1002,27 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Custom Watermark */}
+          <div className="space-y-2 border-t border-white/5 pt-3">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={addWatermark}
+                onChange={(e) => setAddWatermark(e.target.checked)}
+                className="accent-indigo-500 w-3.5 h-3.5 rounded border-white/10"
+              />
+              <span className="text-xs text-white/60 hover:text-white/80 transition-colors font-semibold">🏷️ Add Custom Watermark</span>
+            </label>
+            {addWatermark && (
+              <input
+                value={watermarkText}
+                onChange={(e) => setWatermarkText(e.target.value)}
+                placeholder="Enter watermark text..."
+                className="w-full bg-surface-900 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500/40"
+              />
+            )}
+          </div>
+
           {/* Error Banner */}
           {error && (
             <div className="flex items-start gap-2.5 text-red-400 text-xs bg-red-500/10 px-3.5 py-3 rounded-xl border border-red-500/20">
@@ -980,7 +1035,9 @@ export default function Home() {
           <button
             onClick={handleProcess}
             disabled={!canProcess || !!isProcessing}
-            className="w-full button-premium disabled:opacity-40 disabled:cursor-not-allowed text-pure-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm glow-border"
+            className={`w-full button-premium disabled:opacity-40 disabled:cursor-not-allowed text-pure-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm glow-border ${
+              canProcess && !isProcessing ? "pulse-glow" : ""
+            }`}
           >
             {isProcessing ? (
               <><Loader2 size={16} className="animate-spin text-pure-white" /> Forging Video Clips...</>
@@ -992,7 +1049,7 @@ export default function Home() {
       </aside>
 
       {/* RIGHT COLUMN: Main Workspace */}
-      <main className="flex-1 min-h-screen flex flex-col bg-gradient-to-br from-surface-900 via-surface-900 to-indigo-950/15 overflow-y-auto">
+      <main className="flex-1 min-h-screen flex flex-col bg-gradient-to-br from-surface-900 via-surface-900 to-indigo-950/15 overflow-y-auto animate-fade-in-right gpu-accelerated">
         {/* Workspace Top Bar */}
         <header className="px-6 lg:px-10 py-5 border-b border-white/5 flex items-center justify-between bg-surface-900/40 backdrop-blur-md">
           <div>
@@ -1000,12 +1057,30 @@ export default function Home() {
             <p className="text-xs text-white/40 mt-0.5 font-mono">Process monitors and generated video libraries</p>
           </div>
           {history.length > 0 && (
-            <button
-              onClick={handleClearAllHistory}
-              className="flex items-center gap-1.5 text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3.5 py-2 rounded-lg border border-red-500/25 transition-all font-semibold animate-pulse"
-            >
-              <Trash2 size={13} /> Clear All Files
-            </button>
+            showClearConfirm ? (
+              <div className="flex items-center gap-2 animate-scale-up">
+                <span className="text-xs text-red-400 font-semibold font-mono">Delete all files?</span>
+                <button
+                  onClick={handleClearAllHistory}
+                  className="text-xs bg-red-600 hover:bg-red-700 text-white px-2.5 py-1.5 rounded-md transition-all font-bold shadow shadow-red-600/10"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => setShowClearConfirm(false)}
+                  className="text-xs bg-white/10 hover:bg-white/20 text-white/70 px-2.5 py-1.5 rounded-md transition-all font-bold"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowClearConfirm(true)}
+                className="flex items-center gap-1.5 text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3.5 py-2 rounded-lg border border-red-500/25 transition-all font-semibold"
+              >
+                <Trash2 size={13} /> Clear All Files
+              </button>
+            )
           )}
         </header>
 
@@ -1106,7 +1181,7 @@ export default function Home() {
                   )}
                   {job.status === "cutting" && (
                     <p>
-                      <strong>Pemotongan & Render FFmpeg:</strong> Server lokal memotong klip video sesuai penanda waktu terpilih, memperbesar video (crop) agar pas ke format Reels {format === "reels" ? "9:16" : "16:9"} menggunakan filter Gaussian Blur dinamis pada bagian background.
+                      <strong>Pemotongan & Render FFmpeg:</strong> Server lokal memotong klip video sesuai penanda waktu terpilih, memperbesar video (crop) agar pas ke format {format === "reels" ? "Reels 9:16" : format === "square" ? "Square 1:1" : "Landscape 16:9"} menggunakan filter Gaussian Blur dinamis pada bagian background.
                     </p>
                   )}
                 </div>
@@ -1180,6 +1255,12 @@ export default function Home() {
                       <div className="h-full aspect-[9/16] border-2 border-dashed border-indigo-400 bg-indigo-500/10 flex items-center justify-center shadow-[0_0_50px_rgba(99,102,241,0.25)] animate-pulse">
                         <span className="text-[10px] font-mono text-indigo-300 font-bold bg-black/80 px-2.5 py-1 rounded-md border border-indigo-500/20">
                           Reels 9:16 Crop Zone
+                        </span>
+                      </div>
+                    ) : format === "square" ? (
+                      <div className="h-full aspect-square border-2 border-dashed border-indigo-400 bg-indigo-500/10 flex items-center justify-center shadow-[0_0_50px_rgba(99,102,241,0.25)] animate-pulse">
+                        <span className="text-[10px] font-mono text-indigo-300 font-bold bg-black/80 px-2.5 py-1 rounded-md border border-indigo-500/20">
+                          Square 1:1 Crop Zone
                         </span>
                       </div>
                     ) : (
@@ -1393,7 +1474,7 @@ export default function Home() {
 
           {/* 3. Empty State (no history) */}
           {history.length === 0 && (!job || job.status === "done" || job.status === "error") && !(mode === "manual" && url) && (
-            <div className="flex flex-col items-center justify-center py-20 text-center space-y-6 max-w-lg mx-auto">
+            <div className="flex flex-col items-center justify-center py-20 text-center space-y-6 max-w-lg mx-auto animate-scale-up gpu-accelerated">
               {/* Premium Animated SVG illustration */}
               <div className="relative w-36 h-36 flex items-center justify-center">
                 {/* Orbit concentric circles */}
@@ -1412,7 +1493,7 @@ export default function Home() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-heading text-lg font-bold text-white tracking-wide">Ready to Forge Viral Clips</h3>
+                <h3 className="font-heading text-2xl font-extrabold text-white tracking-tight bg-gradient-to-r from-indigo-400 via-violet-400 to-pink-500 bg-clip-text text-transparent">Ready to Forge Viral Clips</h3>
                 <p className="text-sm text-white/40 leading-relaxed">
                   Masukkan URL video YouTube di panel kontrol sebelah kiri untuk mengekstrak momen terbaik menjadi video vertikal Reels/TikTok.
                 </p>
@@ -1474,7 +1555,10 @@ export default function Home() {
                         clip={clip}
                         jobId={jobItem.jobId}
                         videoUrl={(jobItem as any).video_url || url}
-                        activeProfile={profiles.find((p) => p.id === selectedProfileId) || DEFAULT_PROFILES[0]}
+                        geminiApiKey={geminiApiKey}
+                        openaiApiKey={openaiApiKey}
+                        openaiBaseUrl={openaiBaseUrl}
+                        openaiChatModel={openaiChatModel}
                         onDelete={handleDeleteClip}
                       />
                     ))}
@@ -1709,13 +1793,19 @@ function ClipCard({
   clip,
   jobId,
   videoUrl,
-  activeProfile,
+  geminiApiKey,
+  openaiApiKey,
+  openaiBaseUrl,
+  openaiChatModel,
   onDelete
 }: {
   clip: Clip;
   jobId: string;
   videoUrl: string;
-  activeProfile: any;
+  geminiApiKey: string;
+  openaiApiKey: string;
+  openaiBaseUrl: string;
+  openaiChatModel: string;
   onDelete: (jobId: string, clipIndex: number, clipUrl: string, srtUrl: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -1742,11 +1832,11 @@ function ClipCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clip_transcript: promptText,
-          provider: activeProfile.id === "default" ? "gemini" : "openai",
-          gemini_api_key: activeProfile.geminiApiKey || undefined,
-          openai_api_key: activeProfile.openaiApiKey || undefined,
-          openai_base_url: activeProfile.openaiBaseUrl || undefined,
-          openai_chat_model: activeProfile.openaiChatModel || undefined,
+          provider: (geminiApiKey || (!geminiApiKey && !openaiApiKey)) ? "gemini" : "openai",
+          gemini_api_key: geminiApiKey.trim() || undefined,
+          openai_api_key: openaiApiKey.trim() || undefined,
+          openai_base_url: openaiBaseUrl.trim() || undefined,
+          openai_chat_model: openaiChatModel.trim() || undefined,
         })
       });
       if (res.ok) {

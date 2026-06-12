@@ -283,10 +283,48 @@ h1, h2, h3, h4, .font-heading {
     animation: pulseGlow 2s infinite ease-in-out;
   }
 
+  .gpu-accelerated {
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+    will-change: transform, opacity;
+  }
+
+  .bg-tech-grid {
+    background-size: 24px 24px;
+    background-image: 
+      radial-gradient(circle, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  }
+
+  .theme-light .bg-tech-grid {
+    background-image: 
+      radial-gradient(circle, rgba(15, 23, 42, 0.015) 1px, transparent 1px);
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  .animate-fade-in-left {
+    animation: fadeInLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  .animate-fade-in-right {
+    animation: fadeInRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  .animate-scale-up {
+    animation: scaleUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
   .animate-flow-line {
     stroke-dasharray: 6, 6;
     animation: flowLine 1.5s linear infinite;
   }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 @keyframes borderGlow {
@@ -319,4 +357,72 @@ h1, h2, h3, h4, .font-heading {
     box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.3);
     border-color: rgba(99, 102, 241, 0.3);
   }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes drift {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-drift-1 {
+  animation: drift 15s ease-in-out infinite;
+}
+
+.animate-drift-2 {
+  animation: drift 20s ease-in-out infinite;
+  animation-delay: -5s;
 }

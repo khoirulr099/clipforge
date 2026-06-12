@@ -1,9 +1,9 @@
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export type Mode = "auto" | "ai" | "manual";
 export type Provider = "gemini" | "openai";
 export type Quality = "360p" | "480p" | "720p" | "1080p";
-export type Format = "reels" | "landscape";
+export type Format = "reels" | "landscape" | "square";
 
 export interface ManualClip {
   start: number;
@@ -27,6 +27,10 @@ export interface ProcessRequest {
   openai_base_url?: string;
   openai_chat_model?: string;
   subtitle_style?: string;
+  audio_fade?: boolean;
+  watermark_text?: string;
+  subtitle_position?: string;
+  split_screen?: boolean;
 }
 
 export interface Clip {

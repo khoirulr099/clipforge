@@ -29,7 +29,7 @@ class ProcessRequest(BaseModel):
     quality: Literal["360p", "480p", "720p", "1080p"] = "720p"
     target_duration: int = 60          # seconds per clip
     max_clips: int = 3
-    format: Literal["reels", "landscape"] = "reels"
+    format: Literal["reels", "landscape", "square"] = "reels"
     auto_tracking: bool = False
     output_prefix: str = "clip"
     use_variation: bool = False
@@ -39,6 +39,10 @@ class ProcessRequest(BaseModel):
     openai_base_url: Optional[str] = ""
     openai_chat_model: Optional[str] = ""
     subtitle_style: Optional[str] = "none"
+    audio_fade: Optional[bool] = False
+    watermark_text: Optional[str] = ""
+    subtitle_position: Optional[str] = "bottom"
+    split_screen: Optional[bool] = False
 
 
 class DeleteClipRequest(BaseModel):
@@ -292,6 +296,10 @@ def run_pipeline(job_id: str, req: ProcessRequest):
                 srt_path=temp_srt_path,
                 subtitle_style=req.subtitle_style,
                 quality=req.quality,
+                audio_fade=req.audio_fade,
+                watermark_text=req.watermark_text,
+                subtitle_position=req.subtitle_position,
+                split_screen=req.split_screen,
             )
 
             # Clean up temp SRT file used for burning
