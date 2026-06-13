@@ -585,7 +585,7 @@ export default function Home() {
   const canProcess = url && (mode !== "manual" || manualClips.length > 0);
 
   return (
-    <div className={`theme-${theme} relative flex flex-col lg:flex-row min-h-screen bg-surface-900 text-white selection:bg-indigo-500/30 selection:text-white transition-colors duration-500 overflow-x-hidden bg-tech-grid`}>
+    <div className={`theme-${theme} relative flex flex-col lg:flex-row min-h-screen bg-surface-900 text-white selection:bg-indigo-500/30 selection:text-white lg:transition-colors lg:duration-500 bg-tech-grid`}>
       {/* Dynamic drifting background glow blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[60px] lg:blur-[120px] pointer-events-none z-0" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-500/5 blur-[60px] lg:blur-[120px] pointer-events-none z-0" />
@@ -1321,7 +1321,7 @@ export default function Home() {
       </aside>
 
       {/* RIGHT COLUMN: Main Workspace */}
-      <main className="flex-1 lg:min-h-screen flex flex-col bg-gradient-to-br from-surface-900 via-surface-900 to-indigo-950/15 lg:overflow-y-auto lg:overscroll-y-contain animate-fade-in-right">
+      <main className="flex-1 flex flex-col bg-gradient-to-br from-surface-900 via-surface-900 to-indigo-950/15 lg:overflow-y-auto lg:overscroll-y-contain animate-fade-in-right">
         {/* Workspace Top Bar */}
         <header className="px-6 lg:px-10 py-5 border-b border-white/5 flex items-center justify-between bg-surface-900/40 lg:backdrop-blur-md">
           <div>
@@ -1845,7 +1845,7 @@ export default function Home() {
 
           {/* 3. Empty State (no history) */}
           {history.length === 0 && (!job || job.status === "done" || job.status === "error") && !(mode === "manual" && url) && (
-            <div className="flex flex-col items-center justify-center py-20 text-center space-y-6 max-w-lg mx-auto animate-scale-up gpu-accelerated">
+            <div className="flex flex-col items-center justify-center py-20 text-center space-y-6 max-w-lg mx-auto animate-scale-up">
               {/* Premium Animated SVG illustration */}
               <div className="relative w-36 h-36 flex items-center justify-center">
                 {/* Orbit concentric circles */}
