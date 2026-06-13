@@ -599,7 +599,7 @@ export default function Home() {
   const canProcess = url && (mode !== "manual" || manualClips.length > 0);
 
   return (
-    <div className={`theme-${theme} relative flex flex-col lg:flex-row min-h-screen bg-surface-900 text-white selection:bg-indigo-500/30 selection:text-white lg:transition-colors lg:duration-500 overflow-x-hidden bg-tech-grid`}>
+    <div className={`theme-${theme} relative flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden bg-surface-900 text-white selection:bg-indigo-500/30 selection:text-white lg:transition-colors lg:duration-500 overflow-x-hidden bg-tech-grid`}>
       {/* Background glow blobs — clipped to prevent horizontal overflow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[60px] lg:blur-[120px]" />
@@ -875,76 +875,82 @@ export default function Home() {
                     </div>
 
                     <div className="space-y-2">
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <label className="text-[9px] font-mono text-white/30 uppercase">Gemini API Key</label>
-                          <button
-                            type="button"
-                            onClick={() => setShowGeminiKey(!showGeminiKey)}
-                            className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
-                          >
-                            {showGeminiKey ? <EyeOff size={10} /> : <Eye size={10} />}
-                            {showGeminiKey ? "Hide" : "Show"}
-                          </button>
+                      {(transcriptionProvider === "gemini" || (mode === "ai" && provider === "gemini")) && (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[9px] font-mono text-white/30 uppercase">Gemini API Key</label>
+                            <button
+                              type="button"
+                              onClick={() => setShowGeminiKey(!showGeminiKey)}
+                              className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
+                            >
+                              {showGeminiKey ? <EyeOff size={10} /> : <Eye size={10} />}
+                              {showGeminiKey ? "Hide" : "Show"}
+                            </button>
+                          </div>
+                          <input
+                            type={showGeminiKey ? "text" : "password"}
+                            value={geminiApiKey}
+                            onChange={(e) => setGeminiApiKey(e.target.value)}
+                            placeholder="AIzaSy..."
+                            className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
+                          />
+                          <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For Google Gemini models.</p>
                         </div>
-                        <input
-                          type={showGeminiKey ? "text" : "password"}
-                          value={geminiApiKey}
-                          onChange={(e) => setGeminiApiKey(e.target.value)}
-                          placeholder="AIzaSy..."
-                          className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
-                        />
-                        <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For Google Gemini models.</p>
-                      </div>
+                      )}
 
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <label className="text-[9px] font-mono text-white/30 uppercase">OpenAI API Key</label>
-                          <button
-                            type="button"
-                            onClick={() => setShowOpenaiKey(!showOpenaiKey)}
-                            className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
-                          >
-                            {showOpenaiKey ? <EyeOff size={10} /> : <Eye size={10} />}
-                            {showOpenaiKey ? "Hide" : "Show"}
-                          </button>
+                      {(transcriptionProvider === "openai" || transcriptionProvider === "custom" || (mode === "ai" && provider === "openai")) && (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[9px] font-mono text-white/30 uppercase">OpenAI API Key</label>
+                            <button
+                              type="button"
+                              onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                              className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
+                            >
+                              {showOpenaiKey ? <EyeOff size={10} /> : <Eye size={10} />}
+                              {showOpenaiKey ? "Hide" : "Show"}
+                            </button>
+                          </div>
+                          <input
+                            type={showOpenaiKey ? "text" : "password"}
+                            value={openaiApiKey}
+                            onChange={(e) => setOpenaiApiKey(e.target.value)}
+                            placeholder="sk-..."
+                            className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
+                          />
+                          <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For OpenAI GPT models.</p>
                         </div>
-                        <input
-                          type={showOpenaiKey ? "text" : "password"}
-                          value={openaiApiKey}
-                          onChange={(e) => setOpenaiApiKey(e.target.value)}
-                          placeholder="sk-..."
-                          className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
-                        />
-                        <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For OpenAI GPT models.</p>
-                      </div>
+                      )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-mono text-white/30 uppercase">Base URL</label>
-                        <input
-                          type="text"
-                          value={openaiBaseUrl}
-                          onChange={(e) => setOpenaiBaseUrl(e.target.value)}
-                          placeholder="https://api.openai.com/v1"
-                          className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
-                        />
-                        <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Custom proxy (dinoiki, DeepSeek, etc.).</p>
-                      </div>
+                    {(transcriptionProvider === "custom" || (mode === "ai" && provider === "openai")) && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-mono text-white/30 uppercase">Base URL</label>
+                          <input
+                            type="text"
+                            value={openaiBaseUrl}
+                            onChange={(e) => setOpenaiBaseUrl(e.target.value)}
+                            placeholder="https://api.openai.com/v1"
+                            className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                          />
+                          <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Custom proxy (dinoiki, DeepSeek, etc.).</p>
+                        </div>
 
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-mono text-white/30 uppercase">Model</label>
-                        <input
-                          type="text"
-                          value={openaiChatModel}
-                          onChange={(e) => setOpenaiChatModel(e.target.value)}
-                          placeholder="gpt-4o"
-                          className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
-                        />
-                        <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Moments analysis model.</p>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-mono text-white/30 uppercase">Model</label>
+                          <input
+                            type="text"
+                            value={openaiChatModel}
+                            onChange={(e) => setOpenaiChatModel(e.target.value)}
+                            placeholder="gpt-4o"
+                            className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                          />
+                          <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Moments analysis model.</p>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Audio Transcription Settings */}
                     <div className="space-y-1.5 border-t border-white/5 pt-2.5 mt-2.5">
