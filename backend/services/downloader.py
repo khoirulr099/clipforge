@@ -75,6 +75,7 @@ def download_video(url: str, job_id: str, quality: str = "720p", progress_callba
         "--no-check-certificate",
         "-N", "8",
         "--remote-components", "ejs:github",
+        "--js-runtimes", "node,deno",
     ]
     if cookies_file:
         cmd.extend(["--cookies", cookies_file])
