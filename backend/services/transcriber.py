@@ -197,16 +197,17 @@ def _transcribe_gemini(audio_path: str, api_key: str) -> dict:
     model = genai.GenerativeModel("gemini-2.5-flash")
     
     prompt = """
-    Please transcribe this audio file. Format your response ONLY as a JSON object with this exact structure:
+    Please transcribe this audio file in its original spoken or sung language (e.g., if Korean, write in Korean Hangul; if Japanese, in Kanji/Kana; if Indonesian, in Indonesian). Do NOT translate the transcription to English or any other language.
+    Format your response ONLY as a JSON object with this exact structure:
     {
-      "language": "en",
-      "full_text": "the entire transcription text...",
+      "language": "original_language_code",
+      "full_text": "the entire transcription text in original language...",
       "segments": [
         {
           "id": 0,
           "start": 0.0,
           "end": 3.5,
-          "text": "first segment text"
+          "text": "first segment text in original language"
         }
       ]
     }
