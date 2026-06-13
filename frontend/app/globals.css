@@ -331,6 +331,7 @@ h1, h2, h3, h4, .font-heading {
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 /* Mobile: disable smooth scroll (causes jank on touch devices) */

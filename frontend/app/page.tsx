@@ -585,10 +585,12 @@ export default function Home() {
   const canProcess = url && (mode !== "manual" || manualClips.length > 0);
 
   return (
-    <div className={`theme-${theme} relative flex flex-col lg:flex-row min-h-screen bg-surface-900 text-white selection:bg-indigo-500/30 selection:text-white lg:transition-colors lg:duration-500 bg-tech-grid`}>
-      {/* Dynamic drifting background glow blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[60px] lg:blur-[120px] pointer-events-none z-0" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-500/5 blur-[60px] lg:blur-[120px] pointer-events-none z-0" />
+    <div className={`theme-${theme} relative flex flex-col lg:flex-row min-h-screen bg-surface-900 text-white selection:bg-indigo-500/30 selection:text-white lg:transition-colors lg:duration-500 overflow-x-hidden bg-tech-grid`}>
+      {/* Background glow blobs — clipped to prevent horizontal overflow */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[60px] lg:blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-500/5 blur-[60px] lg:blur-[120px]" />
+      </div>
 
       {/* LEFT COLUMN: Sidebar Console */}
       <aside className="w-full lg:w-[420px] xl:w-[460px] border-b lg:border-b-0 lg:border-r border-white/5 lg:h-screen lg:sticky lg:top-0 flex flex-col bg-surface-800/60 lg:backdrop-blur-xl z-20 lg:overflow-y-auto lg:overscroll-y-contain scrollbar-premium lg:animate-fade-in-left">
