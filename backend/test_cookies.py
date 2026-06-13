@@ -85,6 +85,31 @@ def main():
     except Exception as e:
         print("\n[-] yt-dlp call FAILED!")
         print(f"[-] Error details:\n{e}")
+        
+    # Run yt-dlp CLI download test
+    print("\nRunning yt-dlp CLI download test...")
+    cmd = [
+        sys.executable, "-m", "yt_dlp",
+        "--skip-download",
+        "--cookies", str(cookies_path),
+        "--remote-components", "ejs:github",
+        "--verbose",
+        url
+    ]
+    print(f"Executing: {' '.join(cmd)}")
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        print(f"CLI Return Code: {res.returncode}")
+        print("\nCLI STDOUT:")
+        print(res.stdout[-2000:])
+        print("\nCLI STDERR:")
+        print(res.stderr[-2000:])
+        if res.returncode == 0:
+            print("[+] CLI TEST SUCCESSFUL!")
+        else:
+            print("[-] CLI TEST FAILED!")
+    except Exception as e:
+        print(f"[-] Failed to execute CLI test: {e}")
 
 if __name__ == "__main__":
     main()
