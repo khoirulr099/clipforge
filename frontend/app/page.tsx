@@ -2434,7 +2434,7 @@ function ClipCard({
               muted
               loop
               preload="metadata"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
         </div>
