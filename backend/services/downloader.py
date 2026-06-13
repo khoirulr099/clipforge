@@ -13,9 +13,16 @@ def ensure_temp_dir(path: str):
 
 def load_cookies() -> str | None:
     """Load cookies.txt from file or env var (base64 encoded)."""
-    cookies_path = Path("cookies.txt")
+    # Locate cookies.txt in the backend root directory (parent of services directory)
+    cookies_path = Path(__file__).parent.parent / "cookies.txt"
     if cookies_path.exists():
         return str(cookies_path)
+    
+    # Fallback to current working directory
+    cwd_cookies = Path("cookies.txt")
+    if cwd_cookies.exists():
+        return str(cwd_cookies)
+
     env_b64 = os.environ.get("YOUTUBE_COOKIES_BASE64", "")
     if env_b64:
         try:
