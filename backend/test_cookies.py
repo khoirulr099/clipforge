@@ -72,6 +72,7 @@ def main():
         "verbose": True,
         "skip_download": True,
         "cookiefile": str(cookies_path),
+        "js_runtimes": {"node": {}, "deno": {}},
     }
     
     try:
