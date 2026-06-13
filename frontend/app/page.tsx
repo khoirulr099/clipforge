@@ -960,6 +960,7 @@ export default function Home() {
                           <option value="gemini">Google Gemini API (Free Tier available)</option>
                           <option value="openai">OpenAI Whisper API (Paid)</option>
                           <option value="custom">Custom/Universal API Proxy (dinoiki, etc.)</option>
+                          <option value="local">Local Whisper (Free & Offline VPS)</option>
                         </select>
                       </div>
 
@@ -969,7 +970,13 @@ export default function Home() {
                         </p>
                       )}
 
-                      {transcriptionProvider !== "gemini" && (
+                      {transcriptionProvider === "local" && (
+                        <p className="text-[9px] text-emerald-300 bg-emerald-500/5 p-2 rounded border border-emerald-500/10 leading-snug">
+                          💡 Local Whisper transcribes offline using a lightweight model directly on your VPS. Free forever, no API keys required! Make sure PyTorch and openai-whisper are installed on the server.
+                        </p>
+                      )}
+
+                      {(transcriptionProvider === "openai" || transcriptionProvider === "custom") && (
                         <div className="space-y-2.5 border border-white/5 rounded-lg p-2.5 bg-black/10">
                           <div className="space-y-1">
                             <div className="flex items-center justify-between">

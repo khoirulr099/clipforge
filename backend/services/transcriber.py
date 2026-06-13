@@ -68,6 +68,9 @@ def transcribe_video(
                 raise ValueError("Both API Key and Base URL are required for Custom/Universal transcription.")
             return _transcribe_openai(audio_path, key, base, model)
             
+        elif transcription_provider == "local":
+            return _transcribe_local(audio_path)
+            
         else: # "gemini"
             key = custom_transcribe_key if custom_transcribe_key else (gemini_api_key if gemini_api_key else settings.GEMINI_API_KEY)
             if not key:
@@ -84,6 +87,44 @@ def transcribe_video(
                 os.remove(audio_path)
             except Exception:
                 pass
+
+
+_local_whisper_model = None
+
+def _transcribe_local(audio_path: str) -> dict:
+    global _local_whisper_model
+    try:
+        import whisper
+    except ImportError as e:
+        raise ImportError(
+            "Local Whisper library is not installed on the server. "
+            "Please run 'pip install openai-whisper torch' on the VPS to enable local offline transcription."
+        ) from e
+
+    model_name = settings.WHISPER_MODEL if settings.WHISPER_MODEL else "base"
+    
+    if _local_whisper_model is None:
+        print(f"[transcriber] Loading local Whisper model '{model_name}' to memory...")
+        _local_whisper_model = whisper.load_model(model_name)
+        
+    print(f"[transcriber] Transcribing locally (audio_path={audio_path})...")
+    result = _local_whisper_model.transcribe(audio_path)
+    
+    segments = []
+    for i, seg in enumerate(result.get("segments", [])):
+        segments.append({
+            "id": i,
+            "start": seg.get("start", 0.0),
+            "end": seg.get("end", 0.0),
+            "text": seg.get("text", "").strip(),
+        })
+        
+    return {
+        "language": result.get("language", "en"),
+        "full_text": result.get("text", ""),
+        "segments": segments,
+    }
+
 
 def _transcribe_openai(audio_path: str, api_key: str, base_url: str, chat_model: str) -> dict:
     client = OpenAI(
