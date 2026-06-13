@@ -355,9 +355,6 @@ def run_pipeline(job_id: str, req: ProcessRequest):
 
             jobs[job_id]["progress"] = 65 + int((i + 1) / len(moments) * 30)
 
-        # Cleanup temp
-        shutil.rmtree(os.path.join(settings.TEMP_DIR, job_id), ignore_errors=True)
-
         jobs[job_id].update({
             "status": "done",
             "progress": 100,
@@ -370,3 +367,6 @@ def run_pipeline(job_id: str, req: ProcessRequest):
 
     except Exception as e:
         jobs[job_id].update({"status": "error", "error": str(e), "progress": 0})
+    finally:
+        # Always clean up temporary files for this job to prevent disk leaks
+        shutil.rmtree(os.path.join(settings.TEMP_DIR, job_id), ignore_errors=True)
