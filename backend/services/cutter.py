@@ -353,13 +353,14 @@ def cut_clip(
         outline_thickness = max(1.0, float(font_size / 8.0))
 
         # Set subtitle alignment and vertical margin based on position
+        # ASS style alignment codes: 2=Bottom-Center, 6=Top-Center, 10=Middle-Center
         alignment = 2  # Bottom Center (Default)
         margin_v = 45
         if subtitle_position == "top":
-            alignment = 8  # Top Center
+            alignment = 6  # Top Center
             margin_v = 30
         elif subtitle_position == "center":
-            alignment = 5  # Middle Center
+            alignment = 10  # Middle Center
             margin_v = 10
 
         style = ""
@@ -494,13 +495,14 @@ def cut_clip(
             font_size = max(16, min(48, int(out_h * 0.028)))
             outline_thickness = max(1.0, float(font_size / 8.0))
             
+            # ASS style alignment codes: 2=Bottom-Center, 6=Top-Center, 10=Middle-Center
             alignment = 2
             margin_v = 45
             if subtitle_position == "top":
-                alignment = 8
+                alignment = 6
                 margin_v = 30
             elif subtitle_position == "center":
-                alignment = 5
+                alignment = 10
                 margin_v = 10
                 
             style = ""
