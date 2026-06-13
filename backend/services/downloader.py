@@ -70,8 +70,6 @@ def download_video(url: str, job_id: str, quality: str = "720p", progress_callba
         "--merge-output-format", "mkv",
         "--no-check-certificate",
         "-N", "8",
-        "--force-ipv4",
-        "--extractor-args", "youtube:player-client=ios,mweb",
     ]
     if cookies_file:
         cmd.extend(["--cookies", cookies_file])
@@ -126,12 +124,6 @@ def download_video(url: str, job_id: str, quality: str = "720p", progress_callba
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
-        "source_address": "0.0.0.0",  # Force IPv4
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["ios", "mweb"]
-            }
-        },
         **({"cookiefile": cookies_file} if cookies_file else {}),
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -159,12 +151,6 @@ def get_video_metadata(url: str) -> dict:
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
-        "source_address": "0.0.0.0",  # Force IPv4
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["ios", "mweb"]
-            }
-        },
         **({"cookiefile": cookies_file} if cookies_file else {}),
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
