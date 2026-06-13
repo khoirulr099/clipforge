@@ -43,6 +43,20 @@ function getYouTubeId(url: string): string | null {
   }
 }
 
+function getFormatFromResolution(res?: string): "reels" | "landscape" | "square" {
+  if (!res) return "landscape";
+  const parts = res.split("x");
+  if (parts.length === 2) {
+    const w = parseInt(parts[0], 10);
+    const h = parseInt(parts[1], 10);
+    if (!isNaN(w) && !isNaN(h)) {
+      if (w < h) return "reels";
+      if (w === h) return "square";
+    }
+  }
+  return "landscape";
+}
+
 export default function Home() {
   // ── URL & Meta ──
   const [url, setUrl] = useState("");
@@ -1933,6 +1947,7 @@ export default function Home() {
                         openaiBaseUrl={openaiBaseUrl}
                         openaiChatModel={openaiChatModel}
                         onDelete={handleDeleteClip}
+                        format={jobItem.format || getFormatFromResolution(jobItem.resolution)}
                       />
                     ))}
                   </div>
@@ -2170,7 +2185,8 @@ function ClipCard({
   openaiApiKey,
   openaiBaseUrl,
   openaiChatModel,
-  onDelete
+  onDelete,
+  format
 }: {
   clip: Clip;
   jobId: string;
@@ -2180,6 +2196,7 @@ function ClipCard({
   openaiBaseUrl: string;
   openaiChatModel: string;
   onDelete: (jobId: string, clipIndex: number, clipUrl: string, srtUrl: string) => void;
+  format: "landscape" | "reels" | "square";
 }) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -2315,7 +2332,11 @@ function ClipCard({
           )}
 
           {/* Video Player */}
-          <div className="mb-4 relative rounded-xl overflow-hidden border border-white/10 shadow-lg bg-black/60 group/player">
+          <div className={`mb-4 relative rounded-xl overflow-hidden border border-white/10 shadow-lg bg-black/60 group/player ${
+            format === "reels" ? "aspect-[9/16] max-w-[260px] mx-auto w-full" :
+            format === "square" ? "aspect-square max-w-[320px] mx-auto w-full" :
+            "aspect-video w-full"
+          }`}>
             <video
               ref={videoRef}
               src={clip.clip_url}
@@ -2323,7 +2344,7 @@ function ClipCard({
               muted
               loop
               preload="metadata"
-              className="w-full h-auto max-h-[360px] object-contain mx-auto"
+              className="w-full h-full object-cover"
             />
           </div>
         </div>

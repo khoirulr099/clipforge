@@ -77,7 +77,7 @@ async def fetch_metadata(req: MetadataRequest):
 @router.post("/process")
 async def process_video(req: ProcessRequest, background_tasks: BackgroundTasks):
     job_id = str(uuid.uuid4())
-    jobs[job_id] = {"status": "queued", "progress": 0, "clips": []}
+    jobs[job_id] = {"status": "queued", "progress": 0, "clips": [], "format": req.format}
     background_tasks.add_task(run_pipeline, job_id, req)
     return {"job_id": job_id}
 
@@ -365,6 +365,7 @@ def run_pipeline(job_id: str, req: ProcessRequest):
             "video_title": video_info["title"],
             "video_duration": video_info["duration"],
             "resolution": video_info["resolution"],
+            "format": req.format,
         })
 
     except Exception as e:

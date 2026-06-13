@@ -77,6 +77,149 @@ def detect_active_speaker_x(video_path: str, start_time: float, duration: float,
     return (iw - crop_w) // 2
 
 
+def analyze_split_screen(
+    video_path: str,
+    start_time: float,
+    duration: float,
+    iw: int,
+    ih: int,
+    crop_w: int
+) -> tuple:
+    """Analyze the video segment to find speaker centers and layout intervals."""
+    default_left = iw // 4 - crop_w // 2
+    default_right = 3 * iw // 4 - crop_w // 2
+    
+    # Clamp to boundaries
+    default_left = max(0, min(iw // 2 - crop_w, default_left))
+    default_right = max(iw // 2, min(iw - crop_w, default_right))
+    
+    try:
+        import cv2
+    except ImportError:
+        return default_left, default_right, [(0.0, duration, "split")]
+
+    try:
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            return default_left, default_right, [(0.0, duration, "split")]
+
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        if fps <= 0:
+            fps = 30.0
+
+        start_frame = int(start_time * fps)
+        step = max(1, int(fps / 2.0))  # Sample 2 frames per second
+        cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+        
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        left_xs = []
+        right_xs = []
+        states = []
+
+        total_frames_to_read = int(duration * fps)
+        frames_read = 0
+
+        while frames_read < total_frames_to_read:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            min_size = int(ih * 0.08)
+            faces = face_cascade.detectMultiScale(
+                gray, 
+                scaleFactor=1.15, 
+                minNeighbors=4, 
+                minSize=(min_size, min_size)
+            )
+
+            left_faces = []
+            right_faces = []
+            for (x, y, w, h) in faces:
+                center_x = x + w / 2
+                if center_x < iw / 2:
+                    left_faces.append((x, y, w, h))
+                else:
+                    right_faces.append((x, y, w, h))
+
+            if left_faces:
+                largest_left = max(left_faces, key=lambda f: f[2] * f[3])
+                left_xs.append(largest_left[0] + largest_left[2] / 2)
+            if right_faces:
+                largest_right = max(right_faces, key=lambda f: f[2] * f[3])
+                right_xs.append(largest_right[0] + largest_right[2] / 2)
+
+            # Determine frame state
+            if left_faces and not right_faces:
+                states.append("left")
+            elif right_faces and not left_faces:
+                states.append("right")
+            else:
+                states.append("split")
+
+            frames_read += step
+            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame + frames_read)
+
+        cap.release()
+
+        # Calculate median positions for cropping
+        left_crop_x = default_left
+        right_crop_x = default_right
+
+        if left_xs:
+            left_xs.sort()
+            median_left_x = left_xs[len(left_xs) // 2]
+            left_crop_x = int(median_left_x - crop_w / 2)
+            left_crop_x = max(0, min(iw // 2 - crop_w, left_crop_x))
+
+        if right_xs:
+            right_xs.sort()
+            median_right_x = right_xs[len(right_xs) // 2]
+            right_crop_x = int(median_right_x - crop_w / 2)
+            right_crop_x = max(iw // 2, min(iw - crop_w, right_crop_x))
+
+        left_crop_x = (left_crop_x // 2) * 2
+        right_crop_x = (right_crop_x // 2) * 2
+
+        # Create smoothed intervals
+        if not states:
+            return left_crop_x, right_crop_x, [(0.0, duration, "split")]
+
+        sec_states = []
+        for i, s in enumerate(states):
+            time_sec = i * 0.5
+            if time_sec >= duration:
+                break
+            sec_states.append((time_sec, s))
+
+        smoothed = []
+        current_state = sec_states[0][1]
+        current_start = 0.0
+        
+        for time_sec, state in sec_states:
+            if state != current_state:
+                duration_so_far = time_sec - current_start
+                if duration_so_far >= 2.5:
+                    smoothed.append((current_start, time_sec, current_state))
+                    current_state = state
+                    current_start = time_sec
+        
+        smoothed.append((current_start, duration, current_state))
+        
+        merged = []
+        for start, end, state in smoothed:
+            if merged and merged[-1][2] == state:
+                merged[-1] = (merged[-1][0], end, state)
+            else:
+                merged.append((start, end, state))
+
+        return left_crop_x, right_crop_x, merged
+
+    except Exception as e:
+        print(f"Error in split-screen analysis: {e}")
+        return default_left, default_right, [(0.0, duration, "split")]
+
+
 def find_system_font() -> str:
     """Find a valid font file path on the system for drawtext filter."""
     import platform
@@ -252,12 +395,85 @@ def cut_clip(
         target_portrait_w = ((target_portrait_h * 9 // 16) // 2) * 2
         half_h = target_portrait_h // 2
         
-        # Build filter_complex graph
-        v_filters = (
-            f"[0:v]crop=iw/2:ih:0:0,scale={target_portrait_w}:{half_h}:flags=lanczos[top];"
-            f"[0:v]crop=iw/2:ih:iw/2:0,scale={target_portrait_w}:{half_h}:flags=lanczos[bottom];"
-            f"[top][bottom]vstack=inputs=2[stacked]"
+        # Calculate maximum cropped dimensions to match target 9:8 ratio per half, centered vertically
+        crop_w = (iw // 2)
+        crop_h = int(crop_w * 8 / 9)
+        if crop_h > ih:
+            crop_h = ih
+            crop_w = int(crop_h * 9 / 8)
+        crop_w = (crop_w // 2) * 2
+        crop_h = (crop_h // 2) * 2
+        crop_y = (ih - crop_h) // 2
+        
+        # Detect active speaker coordinates and layout intervals
+        left_crop_x, right_crop_x, intervals = analyze_split_screen(
+            input_path, start, duration, iw, ih, crop_w
         )
+        print(f"[cutter] split_screen intervals: {intervals}")
+        print(f"[cutter] split_screen crop left_x={left_crop_x}, right_x={right_crop_x}, y={crop_y}")
+        
+        if len(intervals) == 1:
+            s_val, e_val, layout_type = intervals[0]
+            if layout_type == "left":
+                v_filters = (
+                    f"[0:v]crop={crop_w}:{crop_h}:{left_crop_x}:{crop_y},"
+                    f"scale={target_portrait_w}:{target_portrait_h}:flags=lanczos[stacked]"
+                )
+            elif layout_type == "right":
+                v_filters = (
+                    f"[0:v]crop={crop_w}:{crop_h}:{right_crop_x}:{crop_y},"
+                    f"scale={target_portrait_w}:{target_portrait_h}:flags=lanczos[stacked]"
+                )
+            else:  # "split"
+                v_filters = (
+                    f"[0:v]split=2[top_in][bot_in];"
+                    f"[top_in]crop={crop_w}:{crop_h}:{left_crop_x}:{crop_y},"
+                    f"scale={target_portrait_w}:{half_h}:flags=lanczos[top_sc];"
+                    f"[bot_in]crop={crop_w}:{crop_h}:{right_crop_x}:{crop_y},"
+                    f"scale={target_portrait_w}:{half_h}:flags=lanczos[bot_sc];"
+                    f"[top_sc][bot_sc]vstack=inputs=2[stacked]"
+                )
+        else:
+            # Build split video filter graph using concatenating streams
+            v_filters = f"[0:v]split={len(intervals)}"
+            for i in range(len(intervals)):
+                v_filters += f"[v_in_{i}]"
+            v_filters += ";"
+            
+            for i, (s_val, e_val, layout_type) in enumerate(intervals):
+                label = f"[out_{i}]"
+                s_str = f"{s_val:.2f}"
+                e_str = f"{e_val:.2f}"
+                
+                if layout_type == "left":
+                    # Full screen left speaker
+                    v_filters += (
+                        f"[v_in_{i}]trim=start={s_str}:end={e_str},setpts=PTS-STARTPTS,"
+                        f"crop={crop_w}:{crop_h}:{left_crop_x}:{crop_y},"
+                        f"scale={target_portrait_w}:{target_portrait_h}:flags=lanczos{label};"
+                    )
+                elif layout_type == "right":
+                    # Full screen right speaker
+                    v_filters += (
+                        f"[v_in_{i}]trim=start={s_str}:end={e_str},setpts=PTS-STARTPTS,"
+                        f"crop={crop_w}:{crop_h}:{right_crop_x}:{crop_y},"
+                        f"scale={target_portrait_w}:{target_portrait_h}:flags=lanczos{label};"
+                    )
+                else:
+                    # Stacked split screen
+                    v_filters += (
+                        f"[v_in_{i}]trim=start={s_str}:end={e_str},setpts=PTS-STARTPTS,"
+                        f"split=2[top_in_{i}][bot_in_{i}];"
+                        f"[top_in_{i}]crop={crop_w}:{crop_h}:{left_crop_x}:{crop_y},"
+                        f"scale={target_portrait_w}:{half_h}:flags=lanczos[top_sc_{i}];"
+                        f"[bot_in_{i}]crop={crop_w}:{crop_h}:{right_crop_x}:{crop_y},"
+                        f"scale={target_portrait_w}:{half_h}:flags=lanczos[bot_sc_{i}];"
+                        f"[top_sc_{i}][bot_sc_{i}]vstack=inputs=2{label};"
+                    )
+            
+            concat_inputs = "".join(f"[out_{i}]" for i in range(len(intervals)))
+            v_filters += f"{concat_inputs}concat=n={len(intervals)}:v=1:a=0[stacked]"
+            
         last_label = "[stacked]"
         
         # Add subtitles inside filter_complex

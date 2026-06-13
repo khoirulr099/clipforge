@@ -62,6 +62,7 @@ export interface JobStatus {
   quality_note?: string;
   transcript?: string;
   error?: string;
+  format?: "reels" | "landscape" | "square";
 }
 
 export interface VideoMeta {
