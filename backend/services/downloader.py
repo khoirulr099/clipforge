@@ -65,9 +65,8 @@ def download_video(url: str, job_id: str, quality: str = "720p", progress_callba
 
     downloaded_path = os.path.join(output_dir, "original.%(ext)s")
     format_selector = build_format_selector(quality)
-    cookies_file = load_cookies()
 
-    cmd = [
+    base_cmd = [
         sys.executable, "-m", "yt_dlp",
         "-f", format_selector,
         "-o", downloaded_path,
@@ -77,39 +76,64 @@ def download_video(url: str, job_id: str, quality: str = "720p", progress_callba
         "--remote-components", "ejs:github",
         "--js-runtimes", "node,deno",
     ]
-    if cookies_file:
-        cmd.extend(["--cookies", cookies_file])
-    cmd.append(url)
 
-    # Use Popen to capture stdout in real-time
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        bufsize=1,
-        encoding="utf-8",
-        errors="ignore"
-    )
+    def run_ytdlp_process(use_cookies: bool) -> int:
+        cmd = list(base_cmd)
+        if use_cookies:
+            cookies_file = load_cookies()
+            if cookies_file:
+                cmd.extend(["--cookies", cookies_file])
+        cmd.append(url)
 
-    # Regex to match: [download]  12.3% of ~50.00MiB at  1.20MiB/s ETA 00:30
-    download_re = re.compile(r"\[download\]\s+(\d+\.\d+)%\s+of\s+\S+\s+at\s+(\S+)\s+ETA\s+(\S+)")
+        print(f"[downloader] Running yt-dlp {'with' if use_cookies else 'without'} cookies...")
+        # Use Popen to capture stdout in real-time
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            encoding="utf-8",
+            errors="ignore"
+        )
 
-    for line in iter(process.stdout.readline, ""):
-        match = download_re.search(line)
-        if match and progress_callback:
+        # Regex to match: [download]  12.3% of ~50.00MiB at  1.20MiB/s ETA 00:30
+        download_re = re.compile(r"\[download\]\s+(\d+\.\d+)%\s+of\s+\S+\s+at\s+(\S+)\s+ETA\s+(\S+)")
+
+        for line in iter(process.stdout.readline, ""):
+            match = download_re.search(line)
+            if match and progress_callback:
+                try:
+                    percent = float(match.group(1))
+                    speed = match.group(2)
+                    eta = match.group(3)
+                    # Map 0-100% to 10-30% in the pipeline progress
+                    pipeline_progress = 10 + int(percent * 0.2)
+                    progress_callback(pipeline_progress, speed, eta)
+                except Exception:
+                    pass
+
+        process.stdout.close()
+        return process.wait()
+
+    # Attempt 1: Without cookies
+    return_code = run_ytdlp_process(use_cookies=False)
+
+    # Attempt 2: If failed and we have cookies, try with cookies
+    if return_code != 0:
+        cookies_file = load_cookies()
+        if cookies_file:
+            print("[downloader] Download without cookies failed. Retrying with cookies...")
+            # Clean up any partial files in output_dir before retrying
             try:
-                percent = float(match.group(1))
-                speed = match.group(2)
-                eta = match.group(3)
-                # Map 0-100% to 10-30% in the pipeline progress
-                pipeline_progress = 10 + int(percent * 0.2)
-                progress_callback(pipeline_progress, speed, eta)
-            except Exception:
-                pass
+                for temp_file in Path(output_dir).glob("original*"):
+                    if temp_file.is_file():
+                        temp_file.unlink()
+            except Exception as e:
+                print(f"[downloader] Failed to clean up temp files before retry: {e}")
+            
+            return_code = run_ytdlp_process(use_cookies=True)
 
-    process.stdout.close()
-    return_code = process.wait()
     if return_code != 0:
         raise RuntimeError("yt-dlp download failed.")
 
@@ -117,6 +141,7 @@ def download_video(url: str, job_id: str, quality: str = "720p", progress_callba
     candidates = list(Path(output_dir).glob("original*"))
     if not candidates:
         candidates = list(Path(output_dir).glob("*.mp4"))
+
     if not candidates:
         raise RuntimeError("Downloaded file not found after yt-dlp completed.")
 
@@ -126,16 +151,35 @@ def download_video(url: str, job_id: str, quality: str = "720p", progress_callba
         raise RuntimeError("Downloaded file is corrupt or invalid.")
 
     # Get info via yt-dlp extract (no re-download)
-    ydl_opts = {
+    ydl_opts_no_cookies = {
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
         "js_runtimes": {"node": {}, "deno": {}},
         "remote_components": {"ejs:github"},
-        **({"cookiefile": cookies_file} if cookies_file else {}),
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
+
+    info = None
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts_no_cookies) as ydl:
+            info = ydl.extract_info(url, download=False)
+    except Exception as e:
+        print(f"[downloader] Extracting metadata post-download without cookies failed: {e}")
+        cookies_file = load_cookies()
+        if cookies_file:
+            print("[downloader] Retrying metadata extraction post-download with cookies...")
+            ydl_opts_with_cookies = {
+                **ydl_opts_no_cookies,
+                "cookiefile": cookies_file,
+            }
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts_with_cookies) as ydl:
+                    info = ydl.extract_info(url, download=False)
+            except Exception as e2:
+                print(f"[downloader] Metadata extraction post-download with cookies also failed: {e2}")
+                raise e2
+        else:
+            raise e
 
     w, h = get_video_resolution(actual_path)
 
@@ -154,17 +198,43 @@ def download_video(url: str, job_id: str, quality: str = "720p", progress_callba
 
 def get_video_metadata(url: str) -> dict:
     """Fetch metadata only, no download."""
-    cookies_file = load_cookies()
-    ydl_opts = {
+    ydl_opts_no_cookies = {
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
         "js_runtimes": {"node": {}, "deno": {}},
         "remote_components": {"ejs:github"},
-        **({"cookiefile": cookies_file} if cookies_file else {}),
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
+
+    info = None
+    last_error = None
+    try:
+        print("[downloader] Attempting get_video_metadata without cookies...")
+        with yt_dlp.YoutubeDL(ydl_opts_no_cookies) as ydl:
+            info = ydl.extract_info(url, download=False)
+    except Exception as e:
+        print(f"[downloader] get_video_metadata without cookies failed: {e}")
+        last_error = e
+
+    if info is None:
+        cookies_file = load_cookies()
+        if cookies_file:
+            print("[downloader] Retrying get_video_metadata with cookies...")
+            ydl_opts_with_cookies = {
+                **ydl_opts_no_cookies,
+                "cookiefile": cookies_file,
+            }
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts_with_cookies) as ydl:
+                    info = ydl.extract_info(url, download=False)
+            except Exception as e:
+                print(f"[downloader] get_video_metadata with cookies failed: {e}")
+                raise e
+        else:
+            if last_error:
+                raise last_error
+            raise RuntimeError("Failed to fetch video metadata and no cookies file is available.")
+
     return {
         "title": info.get("title", ""),
         "duration": info.get("duration", 0),
