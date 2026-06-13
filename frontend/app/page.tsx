@@ -177,7 +177,9 @@ export default function Home() {
   const [openaiChatModel, setOpenaiChatModel] = useState("");
 
   // ── Transcription settings states ──
-  const [transcriptionProvider, setTranscriptionProvider] = useState("gemini");
+  const [useLocalWhisper, setUseLocalWhisper] = useState(false);
+  const [cloudProvider, setCloudProvider] = useState("gemini");
+  const transcriptionProvider = useLocalWhisper ? "local" : cloudProvider;
   const [customTranscribeKey, setCustomTranscribeKey] = useState("");
   const [customTranscribeBase, setCustomTranscribeBase] = useState("");
   const [customTranscribeModel, setCustomTranscribeModel] = useState("whisper-1");
@@ -303,7 +305,14 @@ export default function Home() {
         setOpenaiApiKey(active.openaiApiKey || "");
         setOpenaiBaseUrl(active.openaiBaseUrl || "");
         setOpenaiChatModel(active.openaiChatModel || "");
-        setTranscriptionProvider(active.transcriptionProvider || "gemini");
+        const prov = active.transcriptionProvider || "gemini";
+        if (prov === "local") {
+          setUseLocalWhisper(true);
+          setCloudProvider("gemini");
+        } else {
+          setUseLocalWhisper(false);
+          setCloudProvider(prov);
+        }
         setCustomTranscribeKey(active.customTranscribeKey || "");
         setCustomTranscribeBase(active.customTranscribeBase || "");
         setCustomTranscribeModel(active.customTranscribeModel || "whisper-1");
@@ -875,7 +884,7 @@ export default function Home() {
                     </div>
 
                     <div className="space-y-2">
-                      {(transcriptionProvider === "gemini" || (mode === "ai" && provider === "gemini")) && (
+                      {transcriptionProvider === "gemini" && (
                         <div className="space-y-1">
                           <div className="flex items-center justify-between">
                             <label className="text-[9px] font-mono text-white/30 uppercase">Gemini API Key</label>
@@ -899,7 +908,7 @@ export default function Home() {
                         </div>
                       )}
 
-                      {(transcriptionProvider === "openai" || transcriptionProvider === "custom" || (mode === "ai" && provider === "openai")) && (
+                      {(transcriptionProvider === "openai" || transcriptionProvider === "custom") && (
                         <div className="space-y-1">
                           <div className="flex items-center justify-between">
                             <label className="text-[9px] font-mono text-white/30 uppercase">OpenAI API Key</label>
@@ -924,7 +933,7 @@ export default function Home() {
                       )}
                     </div>
 
-                    {(transcriptionProvider === "custom" || (mode === "ai" && provider === "openai")) && (
+                    {transcriptionProvider === "custom" && (
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
                           <label className="text-[9px] font-mono text-white/30 uppercase">Base URL</label>
@@ -952,87 +961,7 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Audio Transcription Settings */}
-                    <div className="space-y-1.5 border-t border-white/5 pt-2.5 mt-2.5">
-                      <label className="text-[10px] font-mono text-white/40 uppercase">Audio Transcription</label>
-                      
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-mono text-white/30 uppercase">Transcription Provider</label>
-                        <select
-                          value={transcriptionProvider}
-                          onChange={(e) => setTranscriptionProvider(e.target.value)}
-                          className="w-full bg-surface-900 border border-white/10 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-indigo-500/40 text-white cursor-pointer"
-                        >
-                          <option value="gemini">Google Gemini API (Free Tier available)</option>
-                          <option value="openai">OpenAI Whisper API (Paid)</option>
-                          <option value="custom">Custom/Universal API Proxy (dinoiki, etc.)</option>
-                          <option value="local">Local Whisper (Free & Offline VPS)</option>
-                        </select>
-                      </div>
-
-                      {transcriptionProvider === "gemini" && (
-                        <p className="text-[9px] text-indigo-300 bg-indigo-500/5 p-2 rounded border border-indigo-500/10 leading-snug">
-                          💡 Gemini free tier transcribes audio files within Google AI Studio quota limits. Uses the Gemini key set above.
-                        </p>
-                      )}
-
-                      {transcriptionProvider === "local" && (
-                        <p className="text-[9px] text-emerald-300 bg-emerald-500/5 p-2 rounded border border-emerald-500/10 leading-snug">
-                          💡 Local Whisper transcribes offline using a lightweight model directly on your VPS. Free forever, no API keys required! Make sure PyTorch and openai-whisper are installed on the server.
-                        </p>
-                      )}
-
-                      {(transcriptionProvider === "openai" || transcriptionProvider === "custom") && (
-                        <div className="space-y-2.5 border border-white/5 rounded-lg p-2.5 bg-black/10">
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <label className="text-[9px] font-mono text-white/30 uppercase">Transcribe API Key</label>
-                              <button
-                                type="button"
-                                onClick={() => setShowTranscribeKey(!showTranscribeKey)}
-                                className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
-                              >
-                                {showTranscribeKey ? <EyeOff size={10} /> : <Eye size={10} />}
-                                {showTranscribeKey ? "Hide" : "Show"}
-                              </button>
-                            </div>
-                            <input
-                              type={showTranscribeKey ? "text" : "password"}
-                              value={customTranscribeKey}
-                              onChange={(e) => setCustomTranscribeKey(e.target.value)}
-                              placeholder="Leave blank to use main OpenAI key..."
-                              className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
-                            />
-                          </div>
-
-                          {transcriptionProvider === "custom" && (
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-mono text-white/30 uppercase">Transcribe Base URL</label>
-                                <input
-                                  type="text"
-                                  value={customTranscribeBase}
-                                  onChange={(e) => setCustomTranscribeBase(e.target.value)}
-                                  placeholder="e.g. https://api.openai.com/v1"
-                                  className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
-                                />
-                              </div>
-
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-mono text-white/30 uppercase">Transcribe Model</label>
-                                <input
-                                  type="text"
-                                  value={customTranscribeModel}
-                                  onChange={(e) => setCustomTranscribeModel(e.target.value)}
-                                  placeholder="whisper-1"
-                                  className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    {/* Audio Transcription Settings removed from inside profile keys */}
 
                     {/* Save button for user assurance and feedback */}
                     <button
@@ -1228,6 +1157,110 @@ export default function Home() {
               </select>
             </div>
           )}
+
+          {/* Audio Transcription Settings */}
+          <div className="space-y-2 border-t border-white/5 pt-4 mt-1">
+            <label className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Audio Transcription</label>
+
+            {/* Toggle switch for Local Whisper */}
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10 hover:bg-emerald-500/[0.08] transition-colors">
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-white/90">🎙️ Local Whisper (Offline VPS)</span>
+                <span className="text-[9px] text-emerald-400 font-mono">Free forever, no API keys</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={useLocalWhisper}
+                  onChange={(e) => setUseLocalWhisper(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white/30 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+
+            {/* If Local Whisper is enabled, show the nice info alert */}
+            {useLocalWhisper && (
+              <div className="text-[9px] text-emerald-300 bg-emerald-500/5 p-2.5 rounded-lg border border-emerald-500/10 leading-snug animate-scale-up">
+                💡 Local Whisper transcribes offline using a lightweight model directly on your VPS. Free forever, no API keys required! Make sure PyTorch and openai-whisper are installed on the server.
+              </div>
+            )}
+
+            {/* If Local Whisper is disabled, let the user choose a cloud provider */}
+            {!useLocalWhisper && (
+              <div className="space-y-2 animate-scale-up">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-mono text-white/30 uppercase">Cloud Provider</label>
+                  <select
+                    value={cloudProvider}
+                    onChange={(e) => setCloudProvider(e.target.value)}
+                    className="w-full bg-surface-900 border border-white/10 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-indigo-500/40 text-white cursor-pointer font-semibold"
+                  >
+                    <option value="gemini">Google Gemini API (Free Tier available)</option>
+                    <option value="openai">OpenAI Whisper API (Paid)</option>
+                    <option value="custom">Custom/Universal API Proxy (dinoiki, etc.)</option>
+                  </select>
+                </div>
+
+                {cloudProvider === "gemini" && (
+                  <p className="text-[9px] text-indigo-300 bg-indigo-500/5 p-2.5 rounded-lg border border-indigo-500/10 leading-snug">
+                    💡 Gemini free tier transcribes audio files within Google AI Studio quota limits. Uses the Gemini key set in API Settings.
+                  </p>
+                )}
+
+                {(cloudProvider === "openai" || cloudProvider === "custom") && (
+                  <div className="space-y-2.5 border border-white/5 rounded-lg p-2.5 bg-black/10">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[9px] font-mono text-white/30 uppercase">Transcribe API Key</label>
+                        <button
+                          type="button"
+                          onClick={() => setShowTranscribeKey(!showTranscribeKey)}
+                          className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
+                        >
+                          {showTranscribeKey ? <EyeOff size={10} /> : <Eye size={10} />}
+                          {showTranscribeKey ? "Show" : "Hide"}
+                        </button>
+                      </div>
+                      <input
+                        type={showTranscribeKey ? "text" : "password"}
+                        value={customTranscribeKey}
+                        onChange={(e) => setCustomTranscribeKey(e.target.value)}
+                        placeholder="Leave blank to use main OpenAI key..."
+                        className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1.5 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
+                      />
+                    </div>
+
+                    {cloudProvider === "custom" && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-mono text-white/30 uppercase">Transcribe Base URL</label>
+                          <input
+                            type="text"
+                            value={customTranscribeBase}
+                            onChange={(e) => setCustomTranscribeBase(e.target.value)}
+                            placeholder="e.g. https://api.openai.com/v1"
+                            className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-mono text-white/30 uppercase">Transcribe Model</label>
+                          <input
+                            type="text"
+                            value={customTranscribeModel}
+                            onChange={(e) => setCustomTranscribeModel(e.target.value)}
+                            placeholder="whisper-1"
+                            className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Prefix + Toggles */}
           <div className="grid grid-cols-2 gap-4">
