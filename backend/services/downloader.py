@@ -15,11 +15,13 @@ def load_cookies() -> str | None:
     """Load cookies.txt from file or env var (base64 encoded)."""
     # Locate cookies.txt in the backend root directory (parent of services directory)
     cookies_path = Path(__file__).parent.parent / "cookies.txt"
+    print(f"[downloader] Checking cookies path: {cookies_path.resolve()} (exists: {cookies_path.exists()})")
     if cookies_path.exists():
         return str(cookies_path)
     
     # Fallback to current working directory
     cwd_cookies = Path("cookies.txt")
+    print(f"[downloader] Checking fallback cookies path: {cwd_cookies.resolve()} (exists: {cwd_cookies.exists()})")
     if cwd_cookies.exists():
         return str(cwd_cookies)
 
@@ -28,8 +30,10 @@ def load_cookies() -> str | None:
         try:
             decoded = base64.b64decode(env_b64).decode("utf-8", errors="ignore")
             cookies_path.write_text(decoded, encoding="utf-8")
+            print(f"[downloader] Created cookies file from env: {cookies_path.resolve()}")
             return str(cookies_path)
-        except Exception:
+        except Exception as e:
+            print(f"[downloader] Failed to write env cookies: {e}")
             pass
     return None
 
