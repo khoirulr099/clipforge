@@ -6,6 +6,23 @@ import yt_dlp
 def main():
     print("=== ClipForge Cookies Diagnostic Script ===")
     
+    import shutil
+    import subprocess
+    
+    print("\n=== JS Runtime Environment Check ===")
+    print(f"PATH environment: {os.environ.get('PATH', '')}")
+    
+    for cmd in ["node", "nodejs", "deno", "bun"]:
+        path = shutil.which(cmd)
+        print(f"Checking '{cmd}' in PATH: {path}")
+        if path:
+            try:
+                res = subprocess.run([cmd, "--version" if cmd != "nodejs" else "-v"], capture_output=True, text=True)
+                print(f"  Version: {res.stdout.strip() or res.stderr.strip()}")
+            except Exception as e:
+                print(f"  Failed to run '{cmd}': {e}")
+    print("=====================================\n")
+    
     # Check cookies file
     backend_dir = Path(__file__).parent
     cookies_path = backend_dir / "cookies.txt"
