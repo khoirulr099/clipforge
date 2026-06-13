@@ -424,18 +424,27 @@ export default function Home() {
       return;
     }
 
+    // Instantly set fallback metadata with the YouTube thumbnail parsed from video ID
+    const videoId = getYouTubeId(url);
+    if (videoId) {
+      const cachedUrl = localStorage.getItem("clipforge_meta_url");
+      if (cachedUrl !== url) {
+        setMeta({
+          title: "Loading video details...",
+          duration: 0,
+          thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+          uploader: "YouTube",
+          view_count: 0,
+          available_qualities: ["720p", "1080p"],
+        });
+      }
+    }
+
     const timeout = setTimeout(async () => {
       try {
         // Fetch metadata in background to enrich views & qualities, but do NOT block manual sliders
         const data = await fetchMetadata(url);
-        setMeta((prev) => {
-          if (!prev) return data;
-          return {
-            ...prev,
-            view_count: data.view_count,
-            available_qualities: data.available_qualities,
-          };
-        });
+        setMeta(data);
       } catch {
         // silent
       }
