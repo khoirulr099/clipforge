@@ -591,7 +591,7 @@ export default function Home() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-500/5 blur-[60px] lg:blur-[120px] pointer-events-none z-0" />
 
       {/* LEFT COLUMN: Sidebar Console */}
-      <aside className="w-full lg:w-[420px] xl:w-[460px] border-b lg:border-b-0 lg:border-r border-white/5 lg:h-screen lg:sticky lg:top-0 flex flex-col bg-surface-800/60 lg:backdrop-blur-xl z-20 lg:overflow-y-auto lg:overscroll-y-contain scrollbar-premium animate-fade-in-left">
+      <aside className="w-full lg:w-[420px] xl:w-[460px] border-b lg:border-b-0 lg:border-r border-white/5 lg:h-screen lg:sticky lg:top-0 flex flex-col bg-surface-800/60 lg:backdrop-blur-xl z-20 lg:overflow-y-auto lg:overscroll-y-contain scrollbar-premium lg:animate-fade-in-left">
         {/* Branding header */}
         <div className="p-6 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3 group">
@@ -1321,7 +1321,7 @@ export default function Home() {
       </aside>
 
       {/* RIGHT COLUMN: Main Workspace */}
-      <main className="flex-1 flex flex-col bg-gradient-to-br from-surface-900 via-surface-900 to-indigo-950/15 lg:overflow-y-auto lg:overscroll-y-contain animate-fade-in-right">
+      <main className="flex-1 flex flex-col bg-gradient-to-br from-surface-900 via-surface-900 to-indigo-950/15 lg:overflow-y-auto lg:overscroll-y-contain lg:animate-fade-in-right">
         {/* Workspace Top Bar */}
         <header className="px-6 lg:px-10 py-5 border-b border-white/5 flex items-center justify-between bg-surface-900/40 lg:backdrop-blur-md">
           <div>
@@ -1703,10 +1703,10 @@ export default function Home() {
                               setManualStartSec(t);
                               if (t >= manualEndSec) setManualEndSec(Math.min(meta.duration, t + 1));
                             }}
-                            className="flex-1 md:flex-initial text-xs bg-emerald-500/10 hover:bg-emerald-500/25 active:scale-95 text-emerald-400 border border-emerald-500/25 px-3 py-2 rounded-xl transition-all font-bold flex items-center justify-center gap-1.5"
+                            className="flex-1 md:flex-initial text-xs bg-emerald-500/10 hover:bg-emerald-500/25 active:scale-95 text-emerald-400 border border-emerald-500/25 px-3 py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 min-w-[120px]"
                             title={`Tandai waktu saat ini (${formatDuration(currentTime)}) sebagai Start`}
                           >
-                            📍 Mark Start ({formatDuration(currentTime)})
+                            📍 Mark Start
                           </button>
                           <button
                             type="button"
@@ -1715,10 +1715,10 @@ export default function Home() {
                               setManualEndSec(t);
                               if (t <= manualStartSec) setManualStartSec(Math.max(0, t - 1));
                             }}
-                            className="flex-1 md:flex-initial text-xs bg-rose-500/10 hover:bg-rose-500/25 active:scale-95 text-rose-400 border border-rose-500/25 px-3 py-2 rounded-xl transition-all font-bold flex items-center justify-center gap-1.5"
+                            className="flex-1 md:flex-initial text-xs bg-rose-500/10 hover:bg-rose-500/25 active:scale-95 text-rose-400 border border-rose-500/25 px-3 py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 min-w-[120px]"
                             title={`Tandai waktu saat ini (${formatDuration(currentTime)}) sebagai End`}
                           >
-                            📍 Mark End ({formatDuration(currentTime)})
+                            📍 Mark End
                           </button>
                         </div>
 
