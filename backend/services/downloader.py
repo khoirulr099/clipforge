@@ -83,6 +83,14 @@ def download_video(url: str, job_id: str, quality: str = "720p", progress_callba
             cookies_file = load_cookies()
             if cookies_file:
                 cmd.extend(["--cookies", cookies_file])
+        else:
+            # For the anonymous run, configure it to fail extremely fast if blocked on YouTube
+            cmd.extend([
+                "--socket-timeout", "3",
+                "--retries", "0",
+                "--extractor-retries", "0",
+                "--extractor-args", "youtube:player_client=web;player_skip=configs"
+            ])
         cmd.append(url)
 
         print(f"[downloader] Running yt-dlp {'with' if use_cookies else 'without'} cookies...")
@@ -157,6 +165,15 @@ def download_video(url: str, job_id: str, quality: str = "720p", progress_callba
         "skip_download": True,
         "js_runtimes": {"node": {}, "deno": {}},
         "remote_components": {"ejs:github"},
+        "socket_timeout": 3,
+        "retries": 0,
+        "extractor_retries": 0,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["web"],
+                "player_skip": ["configs"],
+            }
+        }
     }
 
     info = None
@@ -169,7 +186,11 @@ def download_video(url: str, job_id: str, quality: str = "720p", progress_callba
         if cookies_file:
             print("[downloader] Retrying metadata extraction post-download with cookies...")
             ydl_opts_with_cookies = {
-                **ydl_opts_no_cookies,
+                "quiet": True,
+                "no_warnings": True,
+                "skip_download": True,
+                "js_runtimes": {"node": {}, "deno": {}},
+                "remote_components": {"ejs:github"},
                 "cookiefile": cookies_file,
             }
             try:
@@ -204,6 +225,15 @@ def get_video_metadata(url: str) -> dict:
         "skip_download": True,
         "js_runtimes": {"node": {}, "deno": {}},
         "remote_components": {"ejs:github"},
+        "socket_timeout": 3,
+        "retries": 0,
+        "extractor_retries": 0,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["web"],
+                "player_skip": ["configs"],
+            }
+        }
     }
 
     info = None
@@ -221,7 +251,11 @@ def get_video_metadata(url: str) -> dict:
         if cookies_file:
             print("[downloader] Retrying get_video_metadata with cookies...")
             ydl_opts_with_cookies = {
-                **ydl_opts_no_cookies,
+                "quiet": True,
+                "no_warnings": True,
+                "skip_download": True,
+                "js_runtimes": {"node": {}, "deno": {}},
+                "remote_components": {"ejs:github"},
                 "cookiefile": cookies_file,
             }
             try:
