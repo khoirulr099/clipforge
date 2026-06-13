@@ -721,7 +721,7 @@ export default function Home() {
             )}
           </div>
 
-          {/* Section 2: API Key Settings */}
+          {/* Section 2: AI Analyzer & Profile Settings */}
           <div className="glass rounded-xl border border-white/5 overflow-hidden">
             <button
               onClick={() => setProfilesOpen(!profilesOpen)}
@@ -729,7 +729,7 @@ export default function Home() {
             >
               <div className="flex items-center gap-2">
                 <Key size={14} className="text-indigo-400" />
-                <span className="text-xs font-semibold text-white/80">API Key Settings</span>
+                <span className="text-xs font-semibold text-white/80">AI Analyzer & Profile Settings</span>
                 {(geminiApiKey || openaiApiKey) ? (
                   <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/10">
                     Custom Keys Active
@@ -884,10 +884,10 @@ export default function Home() {
                     </div>
 
                     <div className="space-y-2">
-                      {transcriptionProvider === "gemini" && (
+                      {provider === "gemini" && (
                         <div className="space-y-1">
                           <div className="flex items-center justify-between">
-                            <label className="text-[9px] font-mono text-white/30 uppercase">Gemini API Key</label>
+                            <label className="text-[9px] font-mono text-white/30 uppercase">Gemini API Key (AI Analyzer)</label>
                             <button
                               type="button"
                               onClick={() => setShowGeminiKey(!showGeminiKey)}
@@ -904,62 +904,62 @@ export default function Home() {
                             placeholder="AIzaSy..."
                             className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
                           />
-                          <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For Google Gemini models.</p>
+                          <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For Google Gemini moments suggestion.</p>
                         </div>
                       )}
 
-                      {(transcriptionProvider === "openai" || transcriptionProvider === "custom") && (
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between">
-                            <label className="text-[9px] font-mono text-white/30 uppercase">OpenAI API Key</label>
-                            <button
-                              type="button"
-                              onClick={() => setShowOpenaiKey(!showOpenaiKey)}
-                              className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
-                            >
-                              {showOpenaiKey ? <EyeOff size={10} /> : <Eye size={10} />}
-                              {showOpenaiKey ? "Hide" : "Show"}
-                            </button>
+                      {provider === "openai" && (
+                        <div className="space-y-2 animate-scale-up">
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[9px] font-mono text-white/30 uppercase">OpenAI API Key (AI Analyzer)</label>
+                              <button
+                                type="button"
+                                onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                                className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
+                              >
+                                {showOpenaiKey ? <EyeOff size={10} /> : <Eye size={10} />}
+                                {showOpenaiKey ? "Hide" : "Show"}
+                              </button>
+                            </div>
+                            <input
+                              type={showOpenaiKey ? "text" : "password"}
+                              value={openaiApiKey}
+                              onChange={(e) => setOpenaiApiKey(e.target.value)}
+                              placeholder="sk-..."
+                              className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
+                            />
+                            <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For OpenAI GPT moments suggestion.</p>
                           </div>
-                          <input
-                            type={showOpenaiKey ? "text" : "password"}
-                            value={openaiApiKey}
-                            onChange={(e) => setOpenaiApiKey(e.target.value)}
-                            placeholder="sk-..."
-                            className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
-                          />
-                          <p className="text-[9px] text-white/40 mt-0.5 leading-tight">For OpenAI GPT models.</p>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-mono text-white/30 uppercase">Base URL</label>
+                              <input
+                                type="text"
+                                value={openaiBaseUrl}
+                                onChange={(e) => setOpenaiBaseUrl(e.target.value)}
+                                placeholder="https://api.openai.com/v1"
+                                className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                              />
+                              <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Custom proxy (dinoiki, DeepSeek, etc.).</p>
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-mono text-white/30 uppercase">Model</label>
+                              <input
+                                type="text"
+                                value={openaiChatModel}
+                                onChange={(e) => setOpenaiChatModel(e.target.value)}
+                                placeholder="gpt-4o"
+                                className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
+                              />
+                              <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Moments analysis model.</p>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
-
-                    {transcriptionProvider === "custom" && (
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-mono text-white/30 uppercase">Base URL</label>
-                          <input
-                            type="text"
-                            value={openaiBaseUrl}
-                            onChange={(e) => setOpenaiBaseUrl(e.target.value)}
-                            placeholder="https://api.openai.com/v1"
-                            className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
-                          />
-                          <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Custom proxy (dinoiki, DeepSeek, etc.).</p>
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-mono text-white/30 uppercase">Model</label>
-                          <input
-                            type="text"
-                            value={openaiChatModel}
-                            onChange={(e) => setOpenaiChatModel(e.target.value)}
-                            placeholder="gpt-4o"
-                            className="w-full bg-surface-900 border border-white/10 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500/40 text-white"
-                          />
-                          <p className="text-[9px] text-white/30 mt-0.5 leading-tight">Moments analysis model.</p>
-                        </div>
-                      </div>
-                    )}
 
                     {/* Audio Transcription Settings removed from inside profile keys */}
 
@@ -1203,9 +1203,31 @@ export default function Home() {
                 </div>
 
                 {cloudProvider === "gemini" && (
-                  <p className="text-[9px] text-indigo-300 bg-indigo-500/5 p-2.5 rounded-lg border border-indigo-500/10 leading-snug">
-                    💡 Gemini free tier transcribes audio files within Google AI Studio quota limits. Uses the Gemini key set in API Settings.
-                  </p>
+                  <div className="space-y-2 animate-scale-up">
+                    <p className="text-[9px] text-indigo-300 bg-indigo-500/5 p-2.5 rounded-lg border border-indigo-500/10 leading-snug">
+                      💡 Gemini free tier transcribes audio files within Google AI Studio quota limits.
+                    </p>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[9px] font-mono text-white/30 uppercase">Gemini Transcribe API Key</label>
+                        <button
+                          type="button"
+                          onClick={() => setShowTranscribeKey(!showTranscribeKey)}
+                          className="text-white/40 hover:text-white/60 text-[10px] flex items-center gap-1"
+                        >
+                          {showTranscribeKey ? <EyeOff size={10} /> : <Eye size={10} />}
+                          {showTranscribeKey ? "Show" : "Hide"}
+                        </button>
+                      </div>
+                      <input
+                        type={showTranscribeKey ? "text" : "password"}
+                        value={customTranscribeKey}
+                        onChange={(e) => setCustomTranscribeKey(e.target.value)}
+                        placeholder="Leave blank to use main Gemini key..."
+                        className="w-full bg-surface-900 border border-white/10 rounded-md px-2.5 py-1.5 text-xs focus:outline-none focus:border-indigo-500/40 text-white font-mono"
+                      />
+                    </div>
+                  </div>
                 )}
 
                 {(cloudProvider === "openai" || cloudProvider === "custom") && (

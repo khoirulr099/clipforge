@@ -412,16 +412,24 @@ def cut_clip(
         print(f"[cutter] split_screen intervals: {intervals}")
         print(f"[cutter] split_screen crop left_x={left_crop_x}, right_x={right_crop_x}, y={crop_y}")
         
+        # Portrait crop size (9:16) at source height for full screen speaker layouts
+        port_w = min(iw, (int(ih * 9 / 16) // 2) * 2)
+        port_h = ih
+
         if len(intervals) == 1:
             s_val, e_val, layout_type = intervals[0]
             if layout_type == "left":
+                port_x = int(left_crop_x + (crop_w - port_w) / 2)
+                port_x = max(0, min(iw - port_w, (port_x // 2) * 2))
                 v_filters = (
-                    f"[0:v]crop={crop_w}:{crop_h}:{left_crop_x}:{crop_y},"
+                    f"[0:v]crop={port_w}:{port_h}:{port_x}:0,"
                     f"scale={target_portrait_w}:{target_portrait_h}:flags=lanczos[stacked]"
                 )
             elif layout_type == "right":
+                port_x = int(right_crop_x + (crop_w - port_w) / 2)
+                port_x = max(0, min(iw - port_w, (port_x // 2) * 2))
                 v_filters = (
-                    f"[0:v]crop={crop_w}:{crop_h}:{right_crop_x}:{crop_y},"
+                    f"[0:v]crop={port_w}:{port_h}:{port_x}:0,"
                     f"scale={target_portrait_w}:{target_portrait_h}:flags=lanczos[stacked]"
                 )
             else:  # "split"
@@ -446,17 +454,21 @@ def cut_clip(
                 e_str = f"{e_val:.2f}"
                 
                 if layout_type == "left":
-                    # Full screen left speaker
+                    # Full screen left speaker (proper 9:16 vertical crop)
+                    port_x = int(left_crop_x + (crop_w - port_w) / 2)
+                    port_x = max(0, min(iw - port_w, (port_x // 2) * 2))
                     v_filters += (
                         f"[v_in_{i}]trim=start={s_str}:end={e_str},setpts=PTS-STARTPTS,"
-                        f"crop={crop_w}:{crop_h}:{left_crop_x}:{crop_y},"
+                        f"crop={port_w}:{port_h}:{port_x}:0,"
                         f"scale={target_portrait_w}:{target_portrait_h}:flags=lanczos{label};"
                     )
                 elif layout_type == "right":
-                    # Full screen right speaker
+                    # Full screen right speaker (proper 9:16 vertical crop)
+                    port_x = int(right_crop_x + (crop_w - port_w) / 2)
+                    port_x = max(0, min(iw - port_w, (port_x // 2) * 2))
                     v_filters += (
                         f"[v_in_{i}]trim=start={s_str}:end={e_str},setpts=PTS-STARTPTS,"
-                        f"crop={crop_w}:{crop_h}:{right_crop_x}:{crop_y},"
+                        f"crop={port_w}:{port_h}:{port_x}:0,"
                         f"scale={target_portrait_w}:{target_portrait_h}:flags=lanczos{label};"
                     )
                 else:
