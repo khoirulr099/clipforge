@@ -73,6 +73,7 @@ def main():
         "skip_download": True,
         "cookiefile": str(cookies_path),
         "js_runtimes": {"node": {}, "deno": {}},
+        "remote_components": {"ejs:github"},
     }
     
     try:
